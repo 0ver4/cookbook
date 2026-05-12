@@ -1,9 +1,11 @@
 using CookBook.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace CookBook.Data;
 
-public class CookBookContext : DbContext
+public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
 {
     public CookBookContext(DbContextOptions<CookBookContext> options)
         : base(options)
@@ -14,7 +16,9 @@ public class CookBookContext : DbContext
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<DifficultyLevel>().HasIndex(d => d.Name).IsUnique();
+        
         base.OnModelCreating(modelBuilder);
+        
+        modelBuilder.Entity<DifficultyLevel>().HasIndex(d => d.Name).IsUnique();
     }
 }
