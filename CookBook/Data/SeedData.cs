@@ -19,4 +19,4 @@ public static class SeedData
             }
         }
     }
-}
+}   // dane startowe do bazy, czy w bazie istnieją wymagane role tworzy je jeśli ich brakuje

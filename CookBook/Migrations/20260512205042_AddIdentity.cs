@@ -223,4 +223,4 @@ namespace CookBook.Migrations
                 name: "AspNetUsers");
         }
     }
-}
+} // dodanie tabel, klucz typu int, usuwanie kaskadowe, unikalne indeksy
