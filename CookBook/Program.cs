@@ -1,5 +1,7 @@
 using CookBook.Data;
 using CookBook.Models;
+using CookBook.Repositories;
+using CookBook.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +12,10 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<CookBookContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("CookBookDb")));
+
+// Repozytoria i serwisy (wzorzec: jedna para na encje)
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
         options.SignIn.RequireConfirmedAccount = false;
