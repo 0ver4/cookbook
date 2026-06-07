@@ -13,9 +13,16 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<CookBookContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("CookBookDb")));
 
-// Repozytoria i serwisy (wzorzec: jedna para na encje)
+// Generyczne repozytorium dla prostych encji słownikowych (Tag, Unit, DifficultyLevel...)
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+// Repozytoria i serwisy (wzorzec: jedna para na encję)
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
+builder.Services.AddScoped<IRecipeService, RecipeService>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
         options.SignIn.RequireConfirmedAccount = false;

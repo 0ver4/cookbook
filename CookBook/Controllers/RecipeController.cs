@@ -1,0 +1,156 @@
+using CookBook.Models;
+using CookBook.Services;
+using CookBook.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CookBook.Controllers;
+
+public class RecipeController : Controller
+{
+    private readonly IRecipeService _service;
+    private readonly UserManager<ApplicationUser> _userManager;
+
+    public RecipeController(IRecipeService service, UserManager<ApplicationUser> userManager)
+    {
+        _service = service;
+        _userManager = userManager;
+    }
+
+    private int CurrentUserId => int.Parse(_userManager.GetUserId(User)!);
+    private bool IsModerator => User.IsInRole("Moderator");
+
+    // GET: /Recipe
+    [AllowAnonymous]
+    public async Task<IActionResult> Index()
+    {
+        var recipes = await _service.GetListAsync();
+        return View(recipes);
+    }
+
+    // GET: /Recipe/Details/5
+    [AllowAnonymous]
+    public async Task<IActionResult> Details(int id)
+    {
+        var recipe = await _service.GetDetailsAsync(id);
+        if (recipe is null)
+            return NotFound();
+
+        ViewBag.CanEdit = User.Identity?.IsAuthenticated == true
+                          && (recipe.OwnerId == CurrentUserId || IsModerator);
+        return View(recipe);
+    }
+
+    // GET: /Recipe/Create
+    [Authorize]
+    public async Task<IActionResult> Create()
+    {
+        var vm = new RecipeFormViewModel
+        {
+            Ingredients = { new RecipeIngredientInput() },
+            Steps = { new RecipeStepInput { Content = "" } }
+        };
+        await _service.PopulateLookupsAsync(vm);
+        return View(vm);
+    }
+
+    // POST: /Recipe/Create
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(RecipeFormViewModel vm)
+    {
+        if (!ModelState.IsValid)
+        {
+            await _service.PopulateLookupsAsync(vm);
+            return View(vm);
+        }
+
+        var (success, error, recipeId) = await _service.CreateAsync(vm, CurrentUserId);
+        if (!success)
+        {
+            ModelState.AddModelError(string.Empty, error!);
+            await _service.PopulateLookupsAsync(vm);
+            return View(vm);
+        }
+
+        TempData["Success"] = "Dodano przepis.";
+        return RedirectToAction(nameof(Details), new { id = recipeId });
+    }
+
+    // GET: /Recipe/Edit/5
+    [Authorize]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var vm = await _service.GetForEditAsync(id);
+        if (vm is null)
+            return NotFound();
+
+        if (vm.Id != 0 && !await UserCanModify(id))
+            return Forbid();
+
+        return View(vm);
+    }
+
+    // POST: /Recipe/Edit/5
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(RecipeFormViewModel vm)
+    {
+        if (!ModelState.IsValid)
+        {
+            await _service.PopulateLookupsAsync(vm);
+            return View(vm);
+        }
+
+        var (success, error) = await _service.UpdateAsync(vm, CurrentUserId, IsModerator);
+        if (!success)
+        {
+            ModelState.AddModelError(string.Empty, error!);
+            await _service.PopulateLookupsAsync(vm);
+            return View(vm);
+        }
+
+        TempData["Success"] = "Zapisano zmiany.";
+        return RedirectToAction(nameof(Details), new { id = vm.Id });
+    }
+
+    // GET: /Recipe/Delete/5
+    [Authorize]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var recipe = await _service.GetDetailsAsync(id);
+        if (recipe is null)
+            return NotFound();
+
+        if (!(recipe.OwnerId == CurrentUserId || IsModerator))
+            return Forbid();
+
+        return View(recipe);
+    }
+
+    // POST: /Recipe/Delete/5
+    [HttpPost, ActionName("Delete")]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var (success, error) = await _service.DeleteAsync(id, CurrentUserId, IsModerator);
+        if (!success)
+        {
+            TempData["Error"] = error;
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        TempData["Success"] = "Usunięto przepis.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    private async Task<bool> UserCanModify(int recipeId)
+    {
+        var details = await _service.GetDetailsAsync(recipeId);
+        return details is not null && (details.OwnerId == CurrentUserId || IsModerator);
+    }
+}
