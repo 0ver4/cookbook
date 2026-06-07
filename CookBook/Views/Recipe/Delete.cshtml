@@ -1,0 +1,24 @@
+@model CookBook.Dtos.RecipeDetailsDto
+@{
+    ViewData["Title"] = "Usuń przepis";
+}
+
+<partial name="_PageHeader" model="@("Usuń przepis")" />
+
+<div class="mx-auto max-w-lg px-4">
+    <div class="rounded-lg border border-red-200 bg-white p-6 shadow-sm">
+        <p class="mb-4 text-sm text-gray-700">
+            Czy na pewno chcesz usunąć przepis
+            <span class="font-semibold text-gray-900">„@Model.Name”</span>?
+            Tej operacji nie można cofnąć.
+        </p>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="flex justify-end gap-2">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Anuluj</a>
+                <button type="submit" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Usuń</button>
+            </div>
+        </form>
+    </div>
+</div>
