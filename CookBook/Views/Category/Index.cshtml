@@ -1,0 +1,46 @@
+@model IReadOnlyList<CookBook.Dtos.CategoryDto>
+@{
+    ViewData["Title"] = "Kategorie";
+}
+
+<partial name="_PageHeader" model="@("Kategorie")" />
+
+<div class="mx-auto max-w-5xl px-4">
+    <div class="flex justify-end mb-3">
+        <a asp-action="Create" class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+            + Dodaj kategorię
+        </a>
+    </div>
+
+    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">#</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Nazwa</th>
+                <th class="px-4 py-3 text-right font-semibold text-gray-600">Akcje</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="3" class="px-4 py-6 text-center text-gray-400">Brak kategorii.</td>
+                </tr>
+            }
+            @foreach (var category in Model)
+            {
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-500">@category.Id</td>
+                    <td class="px-4 py-3 font-medium text-gray-800">@category.Name</td>
+                    <td class="px-4 py-3 text-right">
+                        <a asp-action="Edit" asp-route-id="@category.Id" class="text-indigo-600 hover:underline">Edytuj</a>
+                        <span class="text-gray-300">|</span>
+                        <a asp-action="Delete" asp-route-id="@category.Id" class="text-red-600 hover:underline">Usuń</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
