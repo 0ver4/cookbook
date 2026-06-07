@@ -1,0 +1,11 @@
+@* Naglowek strony. Uzycie: <partial name="_PageHeader" model="@("Tytuł")" />
+   Opcjonalny podtytul przez ViewData["Subtitle"]. *@
+@model string
+
+<div class="mx-auto max-w-5xl px-4 pt-6 pb-2">
+    <h1 class="text-2xl font-bold text-gray-800">@Model</h1>
+    @if (ViewData["Subtitle"] != null)
+    {
+        <p class="text-sm text-gray-500 mt-1">@ViewData["Subtitle"]</p>
+    }
+</div>
