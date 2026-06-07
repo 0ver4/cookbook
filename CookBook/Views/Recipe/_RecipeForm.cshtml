@@ -1,0 +1,230 @@
+@model CookBook.ViewModels.RecipeFormViewModel
+@{
+    var isEdit = Model.Id != 0;
+    var action = isEdit ? "Edit" : "Create";
+}
+
+<form asp-action="@action" method="post" enctype="multipart/form-data" class="space-y-6">
+    <div asp-validation-summary="All" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="Id" />
+    }
+
+    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+        <div>
+            <label asp-for="Name" class="mb-1 block text-sm font-semibold text-gray-700"></label>
+            <input asp-for="Name" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+            <span asp-validation-for="Name" class="mt-1 block text-sm text-red-600"></span>
+        </div>
+
+        <div>
+            <label asp-for="Description" class="mb-1 block text-sm font-semibold text-gray-700"></label>
+            <textarea asp-for="Description" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
+            <span asp-validation-for="Description" class="mt-1 block text-sm text-red-600"></span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div>
+                <label asp-for="PrepTimeMinutes" class="mb-1 block text-sm font-semibold text-gray-700"></label>
+                <input asp-for="PrepTimeMinutes" type="number" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label asp-for="CookTimeMinutes" class="mb-1 block text-sm font-semibold text-gray-700"></label>
+                <input asp-for="CookTimeMinutes" type="number" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label asp-for="Servings" class="mb-1 block text-sm font-semibold text-gray-700"></label>
+                <input asp-for="Servings" type="number" min="1" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label asp-for="DifficultyLevelId" class="mb-1 block text-sm font-semibold text-gray-700"></label>
+                <select asp-for="DifficultyLevelId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                    <option value="">— wybierz —</option>
+                    @foreach (var d in Model.DifficultyLevels)
+                    {
+                        <option value="@d.Id">@d.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="DifficultyLevelId" class="mt-1 block text-sm text-red-600"></span>
+            </div>
+        </div>
+    </div>
+
+    @* --- Składniki --- *@
+    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="mb-3 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-gray-800">Składniki</h3>
+            <button type="button" id="add-ingredient" class="rounded-lg bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-200">+ Dodaj składnik</button>
+        </div>
+        <div id="ingredients-list" class="space-y-2">
+            @for (var i = 0; i < Model.Ingredients.Count; i++)
+            {
+                <div class="ingredient-row grid grid-cols-12 gap-2">
+                    <select name="Ingredients[@i].IngredientId" class="col-span-6 rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+                        @foreach (var ing in Model.AllIngredients)
+                        {
+                            <option value="@ing.Id" selected="@(ing.Id == Model.Ingredients[i].IngredientId)">@ing.Name</option>
+                        }
+                    </select>
+                    <input name="Ingredients[@i].Amount" type="number" step="any" min="0" value="@Model.Ingredients[i].Amount" placeholder="Ilość" class="col-span-3 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+                    <select name="Ingredients[@i].UnitId" class="col-span-2 rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+                        <option value="">dom.</option>
+                        @foreach (var u in Model.AllUnits)
+                        {
+                            <option value="@u.Id" selected="@(u.Id == Model.Ingredients[i].UnitId)">@u.Name</option>
+                        }
+                    </select>
+                    <button type="button" class="remove-row col-span-1 rounded-lg bg-red-50 text-sm text-red-600 hover:bg-red-100">✕</button>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* --- Kroki --- *@
+    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="mb-3 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-gray-800">Kroki przygotowania</h3>
+            <button type="button" id="add-step" class="rounded-lg bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-200">+ Dodaj krok</button>
+        </div>
+        <div id="steps-list" class="space-y-2">
+            @for (var i = 0; i < Model.Steps.Count; i++)
+            {
+                <div class="step-row flex gap-2">
+                    <span class="step-number mt-2 w-6 text-sm font-semibold text-gray-400">@(i + 1).</span>
+                    <textarea name="Steps[@i].Content" rows="2" class="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm">@Model.Steps[i].Content</textarea>
+                    <button type="button" class="remove-row rounded-lg bg-red-50 px-2 text-sm text-red-600 hover:bg-red-100">✕</button>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* --- Kategorie i tagi --- *@
+    <div class="grid gap-6 md:grid-cols-2">
+        <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 class="mb-3 text-sm font-bold text-gray-800">Kategorie</h3>
+            <div class="flex flex-wrap gap-3">
+                @foreach (var c in Model.AllCategories)
+                {
+                    <label class="flex items-center gap-1.5 text-sm text-gray-700">
+                        <input type="checkbox" name="SelectedCategoryIds" value="@c.Id" checked="@Model.SelectedCategoryIds.Contains(c.Id)" />
+                        @c.Name
+                    </label>
+                }
+            </div>
+        </div>
+        <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 class="mb-3 text-sm font-bold text-gray-800">Tagi</h3>
+            <div class="flex flex-wrap gap-3">
+                @foreach (var t in Model.AllTags)
+                {
+                    <label class="flex items-center gap-1.5 text-sm text-gray-700">
+                        <input type="checkbox" name="SelectedTagIds" value="@t.Id" checked="@Model.SelectedTagIds.Contains(t.Id)" />
+                        @t.Name
+                    </label>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* --- Zdjęcia --- *@
+    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+        <h3 class="text-sm font-bold text-gray-800">Zdjęcia</h3>
+
+        @if (Model.ExistingImages.Any())
+        {
+            <div class="flex flex-wrap gap-3">
+                @foreach (var img in Model.ExistingImages)
+                {
+                    <label class="relative block cursor-pointer">
+                        <img src="@img.Url" class="h-24 w-24 rounded-lg object-cover" alt="" />
+                        <span class="mt-1 flex items-center gap-1 text-xs text-red-600">
+                            <input type="checkbox" name="RemoveImageIds" value="@img.ImageId" /> usuń
+                        </span>
+                    </label>
+                }
+            </div>
+        }
+
+        <div>
+            <label asp-for="NewImages" class="mb-1 block text-sm font-semibold text-gray-700"></label>
+            <input asp-for="NewImages" type="file" multiple accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100" />
+            <p class="mt-1 text-xs text-gray-400">jpg / png / webp, max 5 MB każde</p>
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-2">
+        <a asp-action="Index" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Anuluj</a>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700">@(isEdit ? "Zapisz zmiany" : "Dodaj przepis")</button>
+    </div>
+</form>
+
+@* Szablony nowych wierszy dla JS *@
+<template id="ingredient-template">
+    <div class="ingredient-row grid grid-cols-12 gap-2">
+        <select name="__I__.IngredientId" class="col-span-6 rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+            @foreach (var ing in Model.AllIngredients)
+            {
+                <option value="@ing.Id">@ing.Name</option>
+            }
+        </select>
+        <input name="__I__.Amount" type="number" step="any" min="0" placeholder="Ilość" class="col-span-3 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+        <select name="__I__.UnitId" class="col-span-2 rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+            <option value="">dom.</option>
+            @foreach (var u in Model.AllUnits)
+            {
+                <option value="@u.Id">@u.Name</option>
+            }
+        </select>
+        <button type="button" class="remove-row col-span-1 rounded-lg bg-red-50 text-sm text-red-600 hover:bg-red-100">✕</button>
+    </div>
+</template>
+
+<template id="step-template">
+    <div class="step-row flex gap-2">
+        <span class="step-number mt-2 w-6 text-sm font-semibold text-gray-400"></span>
+        <textarea name="__I__.Content" rows="2" class="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"></textarea>
+        <button type="button" class="remove-row rounded-lg bg-red-50 px-2 text-sm text-red-600 hover:bg-red-100">✕</button>
+    </div>
+</template>
+
+<script>
+    (function () {
+        // Po dodaniu/usunięciu wiersza przenumerowujemy indeksy [0],[1]... aby model binder je złapał.
+        function renumber(listId, prefix, hasNumber) {
+            const rows = document.querySelectorAll('#' + listId + ' > div');
+            rows.forEach((row, idx) => {
+                row.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/^.*?(\.[^.]+)$/, prefix + '[' + idx + ']$1');
+                });
+                if (hasNumber) {
+                    const num = row.querySelector('.step-number');
+                    if (num) num.textContent = (idx + 1) + '.';
+                }
+            });
+        }
+
+        function addRow(templateId, listId, prefix, hasNumber) {
+            const tpl = document.getElementById(templateId).content.cloneNode(true);
+            tpl.querySelectorAll('[name]').forEach(el => {
+                el.name = el.name.replace('__I__', prefix + '[0]');
+            });
+            document.getElementById(listId).appendChild(tpl);
+            renumber(listId, prefix, hasNumber);
+        }
+
+        document.getElementById('add-ingredient').addEventListener('click', () =>
+            addRow('ingredient-template', 'ingredients-list', 'Ingredients', false));
+        document.getElementById('add-step').addEventListener('click', () =>
+            addRow('step-template', 'steps-list', 'Steps', true));
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.classList.contains('remove-row')) return;
+            const row = e.target.closest('.ingredient-row, .step-row');
+            const list = row.parentElement;
+            row.remove();
+            if (list.id === 'ingredients-list') renumber('ingredients-list', 'Ingredients', false);
+            else renumber('steps-list', 'Steps', true);
+        });
+    })();
+</script>

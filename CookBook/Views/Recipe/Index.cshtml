@@ -1,0 +1,57 @@
+@model IReadOnlyList<CookBook.Dtos.RecipeListItemDto>
+@{
+    ViewData["Title"] = "Przepisy";
+}
+
+<partial name="_PageHeader" model="@("Przepisy")" />
+
+<div class="mx-auto max-w-5xl px-4">
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="mb-4 flex justify-end">
+            <a asp-action="Create" class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">+ Dodaj przepis</a>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center text-gray-400">
+            Brak przepisów. Bądź pierwszą osobą, która coś doda!
+        </div>
+    }
+    else
+    {
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (var r in Model)
+            {
+                <a asp-action="Details" asp-route-id="@r.Id" class="group block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
+                    <div class="h-40 w-full bg-gray-100">
+                        @if (!string.IsNullOrEmpty(r.ImageUrl))
+                        {
+                            <img src="@r.ImageUrl" alt="@r.Name" class="h-full w-full object-cover" />
+                        }
+                        else
+                        {
+                            <div class="flex h-full items-center justify-center text-4xl text-gray-300">🍽️</div>
+                        }
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-800 group-hover:text-indigo-600">@r.Name</h3>
+                        <p class="mt-1 text-xs text-gray-500">@r.AuthorName • @r.DifficultyName</p>
+                        <div class="mt-2 text-sm text-amber-500">
+                            @if (r.AverageRating.HasValue)
+                            {
+                                <span>★ @r.AverageRating.Value.ToString("0.0")</span>
+                                <span class="text-gray-400">(@r.ReviewCount)</span>
+                            }
+                            else
+                            {
+                                <span class="text-gray-300">brak ocen</span>
+                            }
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>

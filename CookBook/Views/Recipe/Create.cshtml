@@ -1,0 +1,14 @@
+@model CookBook.ViewModels.RecipeFormViewModel
+@{
+    ViewData["Title"] = "Nowy przepis";
+}
+
+<partial name="_PageHeader" model="@("Nowy przepis")" />
+
+<div class="mx-auto max-w-3xl px-4">
+    <partial name="_RecipeForm" model="Model" />
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
