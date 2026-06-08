@@ -1,20 +1,29 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+
+    string Nav(string controller) => currentController == controller
+        ? "bg-indigo-50 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors";
+
+    string NavMobile(string controller) => currentController == controller
+        ? "block bg-indigo-50 text-indigo-700 px-3 py-2 rounded-md text-base font-medium"
+        : "block text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium transition-colors";
+
+    string NavMod() => currentController == "Category"
+        ? "bg-rose-50 text-rose-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+        : "text-rose-700 hover:bg-rose-50 hover:text-rose-900 px-3 py-2 rounded-md text-sm font-medium transition-colors";
+
+    string NavModMobile() => currentController == "Category"
+        ? "block bg-rose-50 text-rose-700 px-3 py-2 rounded-md text-base font-medium"
+        : "block text-rose-700 hover:bg-rose-50 hover:text-rose-900 px-3 py-2 rounded-md text-base font-medium transition-colors";
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CookBook</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <script>
-        tailwind.config = {
-            corePlugins: {
-                
-                preflight: false
-            }
-        };
-    </script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CookBook.styles.css" asp-append-version="true" />
 </head>
 <body>
@@ -23,27 +32,29 @@
         <div class="px-4">
             <div class="flex justify-between items-center py-2">
                 <div class="hidden md:flex items-center space-x-4">
-                    <a class="text-xl font-bold text-gray-800" asp-area="" asp-controller="Home" asp-action="Index">CookBook</a>
+                    <a class="text-xl font-bold text-gray-800 hover:text-indigo-600 transition-colors" asp-area="" asp-controller="Home" asp-action="Index">🍳 CookBook</a>
 
-                    <a class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                    <a class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" asp-area="" asp-controller="Recipe" asp-action="Index">Przepisy</a>
+                    <a class="@Nav("Home")" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                    <a class="@Nav("Recipe")" asp-area="" asp-controller="Recipe" asp-action="Index">Przepisy</a>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <a class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" asp-area="" asp-controller="Collection" asp-action="Index">Kolekcje</a>
-                        <a class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" asp-area="" asp-controller="ShoppingList" asp-action="Index">Lista zakupów</a>
-                        <a class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" asp-area="" asp-controller="MealPlan" asp-action="Index">Plan posiłków</a>
+                        <a class="@Nav("Collection")" asp-area="" asp-controller="Collection" asp-action="Index">Kolekcje</a>
+                        <a class="@Nav("ShoppingList")" asp-area="" asp-controller="ShoppingList" asp-action="Index">Lista zakupów</a>
+                        <a class="@Nav("MealPlan")" asp-area="" asp-controller="MealPlan" asp-action="Index">Plan posiłków</a>
                     }
                     @if (User.IsInRole("Moderator"))
                     {
-                        <a class="text-rose-700 hover:text-rose-900 px-3 py-2 rounded-md text-sm font-medium" asp-area="" asp-controller="Category" asp-action="Index">🛡️ Moderacja</a>
+                        <a class="@NavMod()" asp-area="" asp-controller="Category" asp-action="Index">🛡️ Moderacja</a>
                     }
-                    <a class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" asp-area="" asp-controller="Profile" asp-action="Index">👤 Moje Konto</a>
+                    <a class="@Nav("Profile")" asp-area="" asp-controller="Profile" asp-action="Index">👤 Moje Konto</a>
+                </div>
+                <div class="hidden md:flex items-center gap-4">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         @await Component.InvokeAsync("NotificationBadge")
                     }
+                    <partial name="_LoginPartial" />
                 </div>
-                <partial name="_LoginPartial" />
 
                 <div class="md:hidden flex items-center">
                     <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
@@ -61,19 +72,19 @@
 
         <div id="mobile-menu" class="md:hidden hidden">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a class="text-gray-700 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                <a class="text-gray-700 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium" asp-area="" asp-controller="Recipe" asp-action="Index">Przepisy</a>
+                <a class="@NavMobile("Home")" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                <a class="@NavMobile("Recipe")" asp-area="" asp-controller="Recipe" asp-action="Index">Przepisy</a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a class="text-gray-700 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium" asp-area="" asp-controller="Collection" asp-action="Index">Kolekcje</a>
-                    <a class="text-gray-700 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium" asp-area="" asp-controller="ShoppingList" asp-action="Index">Lista zakupów</a>
-                    <a class="text-gray-700 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium" asp-area="" asp-controller="MealPlan" asp-action="Index">Plan posiłków</a>
+                    <a class="@NavMobile("Collection")" asp-area="" asp-controller="Collection" asp-action="Index">Kolekcje</a>
+                    <a class="@NavMobile("ShoppingList")" asp-area="" asp-controller="ShoppingList" asp-action="Index">Lista zakupów</a>
+                    <a class="@NavMobile("MealPlan")" asp-area="" asp-controller="MealPlan" asp-action="Index">Plan posiłków</a>
                 }
                 @if (User.IsInRole("Moderator"))
                 {
-                    <a class="text-rose-700 hover:text-rose-900 block px-3 py-2 rounded-md text-base font-medium" asp-area="" asp-controller="Category" asp-action="Index">🛡️ Moderacja</a>
+                    <a class="@NavModMobile()" asp-area="" asp-controller="Category" asp-action="Index">🛡️ Moderacja</a>
                 }
-                <a class="text-gray-700 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium" asp-area="" asp-controller="Profile" asp-action="Index">👤 Moje Konto</a>
+                <a class="@NavMobile("Profile")" asp-area="" asp-controller="Profile" asp-action="Index">👤 Moje Konto</a>
             </div>
             <div class="pt-4 pb-3 border-t border-gray-200">
                 <div class="px-2">
@@ -86,19 +97,16 @@
 
 <partial name="_Alert" />
 
-<div class="container">
-    <main role="main" class="pb-3">
-        @RenderBody()
-    </main>
-</div>
+<main role="main" class="min-h-[70vh] pb-3">
+    @RenderBody()
+</main>
 
-<footer class="border-top footer text-muted">
-    <div class="container">
-        &copy; 2026 - CookBook - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+<footer class="mt-12 border-t border-gray-200 py-6">
+    <div class="mx-auto max-w-5xl px-4 text-sm text-gray-400">
+        &copy; 2026 CookBook · <a class="hover:text-gray-600" asp-area="" asp-controller="Home" asp-action="Privacy">Prywatność</a>
     </div>
 </footer>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
-<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 <script>
