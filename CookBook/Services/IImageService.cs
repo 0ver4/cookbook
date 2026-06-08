@@ -5,11 +5,8 @@ namespace CookBook.Services;
 public interface IImageService
 {
     /// <summary>
-    /// Zapisuje przesłany plik na dysku lokalnym (wwwroot/uploads/recipes).
-    /// Zwraca względny URL albo komunikat błędu walidacji.
+    /// Waliduje i wczytuje przesłany plik do pamięci (do zapisania jako blob w bazie).
+    /// Zwraca zawartość i typ MIME albo komunikat błędu walidacji.
     /// </summary>
-    Task<(string? Url, string? Error)> SaveAsync(IFormFile file);
-
-    /// <summary>Usuwa plik z dysku na podstawie względnego URL-a (best-effort).</summary>
-    void Delete(string url);
+    Task<(byte[]? Data, string? ContentType, string? Error)> ReadAsync(IFormFile file);
 }

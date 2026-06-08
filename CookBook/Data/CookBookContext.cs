@@ -60,7 +60,6 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
         modelBuilder.Entity<Ingredient>().HasIndex(d => d.Name).IsUnique();
         modelBuilder.Entity<Reaction>().HasIndex(r => r.Name).IsUnique();
         modelBuilder.Entity<NotificationType>().HasIndex(n => n.Name).IsUnique();
-        modelBuilder.Entity<Image>().HasIndex(i => i.Url).IsUnique();
 
         // --- Composite keys for join entities ---
         modelBuilder.Entity<IngredientAllergen>().HasKey(ia => new { ia.IngredientId, ia.AllergenId });

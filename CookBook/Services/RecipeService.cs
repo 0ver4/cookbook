@@ -11,6 +11,7 @@ public class RecipeService : IRecipeService
 {
     private readonly IRecipeRepository _recipes;
     private readonly IImageService _imageService;
+    private readonly IRepository<Image> _images;
     private readonly IRepository<DifficultyLevel> _difficultyLevels;
     private readonly IRepository<Ingredient> _ingredients;
     private readonly IRepository<Unit> _units;
@@ -24,6 +25,7 @@ public class RecipeService : IRecipeService
     public RecipeService(
         IRecipeRepository recipes,
         IImageService imageService,
+        IRepository<Image> images,
         IRepository<DifficultyLevel> difficultyLevels,
         IRepository<Ingredient> ingredients,
         IRepository<Unit> units,
@@ -36,6 +38,7 @@ public class RecipeService : IRecipeService
     {
         _recipes = recipes;
         _imageService = imageService;
+        _images = images;
         _difficultyLevels = difficultyLevels;
         _ingredients = ingredients;
         _units = units;
@@ -47,13 +50,16 @@ public class RecipeService : IRecipeService
         _db = db;
     }
 
+    // Adres przez który serwujemy zdjęcie z bazy (ImageController)
+    private static string ImageUrl(int imageId) => $"/Image/{imageId}";
+
     public async Task<IReadOnlyList<RecipeListItemDto>> GetListAsync()
     {
         var recipes = await _recipes.GetListAsync();
         return recipes.Select(r => new RecipeListItemDto(
             r.Id,
             r.Name,
-            r.Images.FirstOrDefault()?.Image.Url,
+            r.Images.OrderBy(i => i.Order).Select(i => (int?)i.ImageId).FirstOrDefault() is int firstId ? ImageUrl(firstId) : null,
             r.DifficultyLevel.Name,
             AuthorName(r.User),
             r.Reviews.Count > 0 ? r.Reviews.Average(x => x.Rating) : null,
@@ -97,7 +103,7 @@ public class RecipeService : IRecipeService
             r.CreatedAt,
             r.Reviews.Count > 0 ? r.Reviews.Average(x => x.Rating) : null,
             r.Reviews.Count,
-            r.Images.OrderBy(i => i.Order).Select(i => i.Image.Url).ToList(),
+            r.Images.OrderBy(i => i.Order).Select(i => ImageUrl(i.ImageId)).ToList(),
             ingredients,
             steps,
             r.Categories.Select(c => c.Category.Name).ToList(),
@@ -115,8 +121,8 @@ public class RecipeService : IRecipeService
             .ToList();
 
         var reactions = comment.Reactions
-            .GroupBy(cr => new { cr.Reaction.Id, cr.Reaction.Name, cr.Reaction.Image.Url })
-            .Select(g => new CommentReactionDto(g.Key.Id, g.Key.Name, g.Key.Url, g.Count(), false))
+            .GroupBy(cr => new { cr.Reaction.Id, cr.Reaction.Name, cr.Reaction.ImageId })
+            .Select(g => new CommentReactionDto(g.Key.Id, g.Key.Name, ImageUrl(g.Key.ImageId), g.Count(), false))
             .ToList();
 
         return new CommentDto(
@@ -173,7 +179,7 @@ public class RecipeService : IRecipeService
             SelectedCategoryIds = r.Categories.Select(c => c.CategoryId).ToList(),
             SelectedTagIds = r.Tags.Select(t => t.TagId).ToList(),
             ExistingImages = r.Images.OrderBy(i => i.Order)
-                .Select(i => new ExistingImage(i.ImageId, i.Image.Url)).ToList()
+                .Select(i => new ExistingImage(i.ImageId, ImageUrl(i.ImageId))).ToList()
         };
 
         await PopulateLookupsAsync(vm);
@@ -261,11 +267,12 @@ public class RecipeService : IRecipeService
         if (recipe.UserId != userId && !isModerator)
             return (false, "Brak uprawnień do usunięcia tego przepisu.");
 
-        // Pliki zdjęć usuwamy z dysku; rekordy RecipeImage znikną kaskadowo.
-        foreach (var image in recipe.Images)
-            _imageService.Delete(image.Image.Url);
-
+        // RecipeImage znika kaskadowo z przepisem; same bloby (Image) usuwamy osobno.
+        var imageIds = recipe.Images.Select(i => i.ImageId).ToList();
         _recipes.Remove(recipe);
+        foreach (var imageId in imageIds)
+            _images.Remove(new Image { Id = imageId });
+
         await _recipes.SaveChangesAsync();
         return (true, null);
     }
@@ -431,8 +438,8 @@ public class RecipeService : IRecipeService
         var toRemove = recipe.Images.Where(i => vm.RemoveImageIds.Contains(i.ImageId)).ToList();
         foreach (var ri in toRemove)
         {
-            _imageService.Delete(ri.Image.Url);
             recipe.Images.Remove(ri);
+            _images.Remove(new Image { Id = ri.ImageId });
         }
     }
 
@@ -444,14 +451,14 @@ public class RecipeService : IRecipeService
         var nextOrder = recipe.Images.Count > 0 ? recipe.Images.Max(i => i.Order) + 1 : 1;
         foreach (var file in vm.NewImages)
         {
-            var (url, error) = await _imageService.SaveAsync(file);
+            var (data, contentType, error) = await _imageService.ReadAsync(file);
             if (error is not null)
                 return error;
 
             recipe.Images.Add(new RecipeImage
             {
                 Order = nextOrder++,
-                Image = new Image { Url = url!, UploadedById = userId }
+                Image = new Image { Data = data!, ContentType = contentType!, UploadedById = userId }
             });
         }
 
