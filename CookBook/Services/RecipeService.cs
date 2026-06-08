@@ -15,6 +15,9 @@ public class RecipeService : IRecipeService
     private readonly IRepository<Unit> _units;
     private readonly IRepository<Category> _categories;
     private readonly IRepository<Tag> _tags;
+    private readonly IRepository<Comment> _comments;
+    private readonly IRepository<CommentReaction> _commentReactions;
+    private readonly INotificationService _notifications;
 
     public RecipeService(
         IRecipeRepository recipes,
@@ -23,7 +26,10 @@ public class RecipeService : IRecipeService
         IRepository<Ingredient> ingredients,
         IRepository<Unit> units,
         IRepository<Category> categories,
-        IRepository<Tag> tags)
+        IRepository<Tag> tags,
+        IRepository<Comment> comments,
+        IRepository<CommentReaction> commentReactions,
+        INotificationService notifications)
     {
         _recipes = recipes;
         _imageService = imageService;
@@ -32,6 +38,9 @@ public class RecipeService : IRecipeService
         _units = units;
         _categories = categories;
         _tags = tags;
+        _comments = comments;
+        _commentReactions = commentReactions;
+        _notifications = notifications;
     }
 
     public async Task<IReadOnlyList<RecipeListItemDto>> GetListAsync()
@@ -65,6 +74,12 @@ public class RecipeService : IRecipeService
             .Select(s => new RecipeStepLine(s.Order, s.Content))
             .ToList();
 
+        var commentsDto = r.Comments
+            .Where(c => c.ReplyToId == null) // Na razie bierzemy tylko komentarze główne (bez parentów)
+            .Select(c => MapCommentWithReplies(c, r.Comments))
+            .OrderByDescending(c => c.CreatedAt)
+            .ToList();
+
         return new RecipeDetailsDto(
             r.Id,
             r.Name,
@@ -82,7 +97,33 @@ public class RecipeService : IRecipeService
             ingredients,
             steps,
             r.Categories.Select(c => c.Category.Name).ToList(),
-            r.Tags.Select(t => t.Tag.Name).ToList()
+            r.Tags.Select(t => t.Tag.Name).ToList(),
+            commentsDto
+        );
+    }
+
+    private CommentDto MapCommentWithReplies(Comment comment, ICollection<Comment> allComments)
+    {
+        var replies = allComments
+            .Where(c => c.ReplyToId == comment.Id)
+            .Select(c => MapCommentWithReplies(c, allComments))
+            .OrderBy(c => c.CreatedAt)
+            .ToList();
+
+        var reactions = comment.Reactions
+            .GroupBy(cr => new { cr.Reaction.Id, cr.Reaction.Name, cr.Reaction.Image.Url })
+            .Select(g => new CommentReactionDto(g.Key.Id, g.Key.Name, g.Key.Url, g.Count(), false))
+            .ToList();
+
+        return new CommentDto(
+            comment.Id,
+            comment.UserId,
+            AuthorName(comment.User),
+            comment.Content,
+            comment.CreatedAt,
+            comment.ReplyToId,
+            replies,
+            reactions
         );
     }
 
@@ -222,6 +263,82 @@ public class RecipeService : IRecipeService
 
         _recipes.Remove(recipe);
         await _recipes.SaveChangesAsync();
+        return (true, null);
+    }
+
+    public async Task<(bool Success, string? Error)> AddCommentAsync(int recipeId, int userId, string content, int? replyToId = null)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+            return (false, "Treść komentarza nie może być pusta.");
+
+        var recipeExists = (await _recipes.GetDetailsAsync(recipeId)) != null;
+        if (!recipeExists)
+            return (false, "Nie znaleziono przepisu.");
+
+        var comment = new Comment
+        {
+            RecipeId = recipeId,
+            UserId = userId,
+            Content = content,
+            ReplyToId = replyToId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _comments.AddAsync(comment);
+        await _comments.SaveChangesAsync();
+
+        // Powiadomienie: odpowiedź na komentarz → autor komentarza-rodzica
+        if (replyToId.HasValue)
+        {
+            var parent = await _comments.Query().FirstOrDefaultAsync(c => c.Id == replyToId.Value);
+            if (parent != null && parent.UserId != userId)
+                await _notifications.CreateAsync(parent.UserId, 2, userId, recipeId);
+        }
+        else
+        {
+            // Nowy komentarz pod przepisem → właściciel przepisu
+            var recipe = await _recipes.Query().FirstOrDefaultAsync(r => r.Id == recipeId);
+            if (recipe != null && recipe.UserId != userId)
+                await _notifications.CreateAsync(recipe.UserId, 1, userId, recipeId);
+        }
+
+        return (true, null);
+    }
+
+    public async Task<(bool Success, string? Error)> ToggleCommentReactionAsync(int commentId, int userId, int reactionId)
+    {
+        var existingReaction = (await _commentReactions.GetAllAsync())
+            .FirstOrDefault(cr => cr.CommentId == commentId && cr.UserId == userId);
+
+        if (existingReaction != null && existingReaction.ReactionId == reactionId)
+        {
+            // Ta sama reakcja — odznacz
+            _commentReactions.Remove(existingReaction);
+        }
+        else if (existingReaction != null)
+        {
+            // Inna reakcja — usuń starą najpierw, potem dodaj nową (osobne SaveChanges, bo klucz główny ten sam)
+            _commentReactions.Remove(existingReaction);
+            await _commentReactions.SaveChangesAsync();
+            await _commentReactions.AddAsync(new CommentReaction
+            {
+                CommentId = commentId,
+                UserId = userId,
+                ReactionId = reactionId
+            });
+        }
+        else
+        {
+            // Brak reakcji — dodaj nową
+            await _commentReactions.AddAsync(new CommentReaction
+            {
+                CommentId = commentId,
+                UserId = userId,
+                ReactionId = reactionId
+            });
+        }
+
+        await _commentReactions.SaveChangesAsync();
         return (true, null);
     }
 

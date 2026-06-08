@@ -38,6 +38,10 @@
                         <a class="text-rose-700 hover:text-rose-900 px-3 py-2 rounded-md text-sm font-medium" asp-area="" asp-controller="Category" asp-action="Index">🛡️ Moderacja</a>
                     }
                     <a class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" asp-area="" asp-controller="Profile" asp-action="Index">👤 Moje Konto</a>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        @await Component.InvokeAsync("NotificationBadge")
+                    }
                 </div>
                 <partial name="_LoginPartial" />
 

@@ -82,6 +82,49 @@
         </div>
     </div>
 
+    <!-- Sekcja komentarzy -->
+    <div class="mt-12 border-t border-gray-200 pt-8">
+        <h2 class="mb-6 text-xl font-bold text-gray-800">Komentarze (@Model.Comments.Count)</h2>
+
+        <!-- Formularz nowego komentarza -->
+        @if (Context.User.Identity?.IsAuthenticated == true)
+        {
+            <form asp-controller="Recipe" asp-action="AddComment" method="post" class="mb-8">
+                <input type="hidden" name="recipeId" value="@Model.Id" />
+                <div class="mb-2">
+                    <textarea name="content" rows="3" class="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Napisz co myślisz o tym przepisie..." required></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Dodaj komentarz</button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <div class="mb-8 rounded-lg bg-gray-50 p-4 text-center text-sm text-gray-600">
+                Aby dodać komentarz musisz się <a href="/Identity/Account/Login" class="font-medium text-indigo-600 hover:underline">zalogować</a>.
+            </div>
+        }
+
+        <!-- Lista komentarzy -->
+        @{
+            var commentVd = new ViewDataDictionary(ViewData);
+            commentVd["RecipeId"] = Model.Id;
+            commentVd["IsAuthenticated"] = Context.User.Identity?.IsAuthenticated == true;
+        }
+        <div class="space-y-6">
+            @foreach (var comment in Model.Comments)
+            {
+                @await Html.PartialAsync("_Comment", comment, commentVd)
+            }
+
+            @if (!Model.Comments.Any())
+            {
+                <p class="text-center text-sm text-gray-500">Brak komentarzy. Bądź pierwszą osobą, która oceni ten przepis!</p>
+            }
+        </div>
+    </div>
+
     <div class="mt-8">
         <a asp-action="Index" class="text-sm text-indigo-600 hover:underline">← Wróć do listy</a>
     </div>
