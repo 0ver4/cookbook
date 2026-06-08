@@ -73,7 +73,7 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
         modelBuilder.Entity<RecipeImage>().HasIndex(ri => new { ri.RecipeId, ri.Order }).IsUnique();
         modelBuilder.Entity<Review>().HasKey(r => new { r.RecipeId, r.UserId });
         modelBuilder.Entity<RecipeToCollection>().HasKey(rc => new { rc.RecipeId, rc.CollectionId });
-        modelBuilder.Entity<ShoppingListItem>().HasKey(si => new { si.ShoppingListId, si.IngredientId });
+        modelBuilder.Entity<ShoppingListItem>().HasKey(si => new { si.ShoppingListId, si.IngredientId, si.UnitId });
         modelBuilder.Entity<CommentReaction>().HasKey(cr => new { cr.CommentId, cr.UserId });
 
         // --- Recipe children: cascade from Recipe ---
@@ -183,6 +183,9 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
         modelBuilder.Entity<ShoppingListItem>()
             .HasOne(si => si.Ingredient).WithMany()
             .HasForeignKey(si => si.IngredientId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ShoppingListItem>()
+            .HasOne(si => si.Unit).WithMany()
+            .HasForeignKey(si => si.UnitId).OnDelete(DeleteBehavior.Restrict);
 
         // --- Meal plan ---
         modelBuilder.Entity<MealPlanItem>()
