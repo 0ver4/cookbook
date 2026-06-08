@@ -1,119 +1,84 @@
 @model CookBook.Models.ApplicationUser
-
 @{
     ViewData["Title"] = "Moje Konto";
 
     string dataRejestracji = (Model != null && Model.AccountCreated.Year > 2000)
-        ? Model.AccountCreated.ToString("dd.MM.yyyy")
+        ? Model.AccountCreated.ToLocalTime().ToString("dd.MM.yyyy")
         : DateTime.Now.ToString("dd.MM.yyyy");
+
+    var displayName = string.IsNullOrEmpty(Model?.FirstName)
+        ? Model?.Email?.Split('@')[0]
+        : $"{Model.FirstName} {Model.LastName}";
+    var role = ViewBag.UserRole as string;
+    var isModerator = !string.IsNullOrEmpty(role) && role != "Brak roli";
 }
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
-<div class="container py-5">
-    <div class="row mb-4">
-        <div class="col-12 text-center text-md-start">
-            <h2 class="fw-bold text-dark"><i class="fa-solid fa-kitchen-set text-warning me-2"></i>Witaj w swojej kuchni!</h2>
-            <p class="text-muted">Zarządzaj swoimi przepisami, ulubionymi smakami i ustawieniami konta.</p>
-        </div>
+<div class="mx-auto max-w-5xl px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Witaj w swojej kuchni!</h1>
+        <p class="text-sm text-gray-500">Zarządzaj swoimi przepisami, ulubionymi smakami i ustawieniami konta.</p>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm text-center p-4 bg-white rounded-3">
-                <div class="card-body">
-                    <div class="rounded-circle bg-gradient text-white d-inline-flex align-items-center justify-content-center mb-3 shadow"
-                         style="width: 100px; height: 100px; font-size: 2.5rem; font-weight: bold; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
-                        @Model?.Email?[0].ToString().ToUpper()
-                    </div>
+    <div class="grid gap-6 lg:grid-cols-3">
+        <!-- Karta profilu -->
+        <div class="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
+            <div class="mx-auto mb-3 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-rose-300 to-pink-200 text-3xl font-bold text-white">
+                @Model?.Email?[0].ToString().ToUpper()
+            </div>
+            <h2 class="text-lg font-bold text-gray-800">@displayName</h2>
+            <p class="mb-3 text-sm text-gray-500">@Model?.Email</p>
 
-                    <h4 class="fw-bold mb-1">
-                        @if (string.IsNullOrEmpty(Model?.FirstName))
-                        {
-                            @Model?.Email?.Split('@')[0]
-                        }
-                        else
-                        {
-                            @($"{Model.FirstName} {Model.LastName}")
-                        }
-                    </h4>
-                    <p class="text-muted small mb-3"><i class="fa-regular fa-envelope me-1"></i>@Model?.Email</p>
+            @if (isModerator)
+            {
+                <span class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 text-xs font-medium text-rose-700">🛡️ @role</span>
+            }
+            else
+            {
+                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">👤 Kucharz Amator</span>
+            }
 
-                    @if (ViewBag.UserRole == "Brak roli" || ViewBag.UserRole == null)
-                    {
-                        <span class="badge rounded-pill bg-success px-3 py-2"><i class="fa-solid fa-user me-1"></i>Kucharz Amator</span>
-                    }
-                    else
-                    {
-                        <span class="badge rounded-pill bg-danger px-3 py-2"><i class="fa-solid fa-shield-halved me-1"></i>@ViewBag.UserRole</span>
-                    }
-
-                    <hr class="my-4 text-muted" />
-
-                    <div class="d-flex justify-content-between align-items-center mb-2 small">
-                        <span class="text-muted"><i class="fa-regular fa-calendar me-1"></i> Dołączył:</span>
-                        <span class="fw-semibold text-dark">@dataRejestracji</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center small">
-                        <span class="text-muted"><i class="fa-solid fa-fingerprint me-1"></i> ID Konta:</span>
-                        <span class="badge bg-light text-dark">#@Model?.Id</span>
-                    </div>
+            <div class="mt-4 space-y-1 border-t border-gray-100 pt-4 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Dołączył:</span>
+                    <span class="font-medium text-gray-700">@dataRejestracji</span>
                 </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <a asp-action="Edit" class="btn btn-sm btn-primary w-100 rounded-pill mb-2 shadow-sm">
-                        <i class="fa-solid fa-user-pen me-1"></i> Edytuj dane profilu
-                    </a>
-
-                    <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-secondary w-100 rounded-pill mt-1">
-                        <i class="fa-solid fa-arrow-left me-1"></i> Powrót do menu
-                    </a>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">ID konta:</span>
+                    <span class="rounded bg-gray-100 px-2 text-gray-600">#@Model?.Id</span>
                 </div>
+            </div>
+
+            <div class="mt-4 space-y-2">
+                <a asp-action="Edit" class="block w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Edytuj dane profilu</a>
+                <a asp-controller="Home" asp-action="Index" class="block w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Powrót do menu</a>
             </div>
         </div>
 
-        <div class="col-lg-8">
-            <div class="row g-3 mb-4">
-                <div class="col-sm-4">
-                    <div class="card border-0 shadow-sm p-3 bg-white text-center rounded-3">
-                        <h3 class="fw-bold text-warning mb-1">0</h3>
-                        <span class="text-muted small fw-medium"><i class="fa-solid fa-book-open me-1"></i>Moje Przepisy</span>
-                    </div>
+        <!-- Statystyki + aktywność -->
+        <div class="lg:col-span-2">
+            <div class="mb-4 grid grid-cols-3 gap-3">
+                <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+                    <div class="text-2xl font-bold text-amber-500">0</div>
+                    <div class="text-xs font-medium text-gray-500">📖 Moje przepisy</div>
                 </div>
-                <div class="col-sm-4">
-                    <div class="card border-0 shadow-sm p-3 bg-white text-center rounded-3">
-                        <h3 class="fw-bold text-danger mb-1">0</h3>
-                        <span class="text-muted small fw-medium"><i class="fa-solid fa-heart me-1"></i>Ulubione</span>
-                    </div>
+                <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+                    <div class="text-2xl font-bold text-rose-500">0</div>
+                    <div class="text-xs font-medium text-gray-500">❤️ Ulubione</div>
                 </div>
-                <div class="col-sm-4">
-                    <div class="card border-0 shadow-sm p-3 bg-white text-center rounded-3">
-                        <h3 class="fw-bold text-info mb-1">0</h3>
-                        <span class="text-muted small fw-medium"><i class="fa-solid fa-comment me-1"></i>Komentarze</span>
-                    </div>
+                <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+                    <div class="text-2xl font-bold text-sky-500">0</div>
+                    <div class="text-xs font-medium text-gray-500">💬 Komentarze</div>
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm bg-white rounded-3 section-activity">
-                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
-                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-bolt text-primary me-2"></i>Ostatnia aktywność</h5>
-                </div>
-                <div class="card-body p-5 d-flex flex-column justify-content-center align-items-center text-center text-muted">
-                    <div class="mb-3">
-                        <i class="fa-solid fa-utensils fa-2x text-black-50 opacity-25"></i>
-                    </div>
-                    <p class="mb-0 small fw-semibold">Nie dodałaś jeszcze żadnych przepisów ani opinii.</p>
-                    <p class="text-xs text-muted mb-0">Twoja kulinarna przygoda w systemie zaczyna się właśnie tutaj!</p>
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h3 class="mb-4 font-bold text-gray-800">⚡ Ostatnia aktywność</h3>
+                <div class="flex flex-col items-center justify-center py-10 text-center text-gray-400">
+                    <div class="mb-2 text-3xl opacity-40">🍴</div>
+                    <p class="text-sm font-semibold">Nie dodałeś jeszcze żadnych przepisów ani opinii.</p>
+                    <p class="text-xs">Twoja kulinarna przygoda zaczyna się tutaj!</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    body {
-        background-color: #f4f6f9 !important;
-    }
-    .section-activity {
-        min-height: 200px;
-    }
-</style>

@@ -1,8 +1,22 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Strona główna";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="mx-auto max-w-3xl px-4 py-16 text-center">
+    <div class="mb-4 text-5xl">🍳</div>
+    <h1 class="mb-3 text-4xl font-bold text-gray-800">CookBook</h1>
+    <p class="mb-8 text-lg text-gray-500">
+        Przeglądaj, dodawaj i zarządzaj przepisami kulinarnymi. Twórz kolekcje, listy zakupów i plan posiłków.
+    </p>
+    <div class="flex justify-center gap-3">
+        <a asp-controller="Recipe" asp-action="Index" class="rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700">Przeglądaj przepisy</a>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a asp-controller="Recipe" asp-action="Create" class="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50">Dodaj przepis</a>
+        }
+        else
+        {
+            <a asp-area="Identity" asp-page="/Account/Register" class="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50">Załóż konto</a>
+        }
+    </div>
 </div>

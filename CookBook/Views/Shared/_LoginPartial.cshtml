@@ -3,26 +3,22 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav">
-    @if (SignInManager.IsSignedIn(User))
-    {
-        <li class="nav-item">
-            <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name!</a>
-        </li>
-        <li class="nav-item">
-            <form  class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                <button  type="submit" class="nav-link btn btn-link text-dark">Logout</button>
-            </form>
-        </li>
-    }
-    else
-    {
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
-        </li>
-    }
-</ul> 
-
+@if (SignInManager.IsSignedIn(User))
+{
+    <div class="flex items-center gap-3">
+        <a asp-area="Identity" asp-page="/Account/Manage/Index" title="Zarządzaj kontem"
+           class="hidden text-sm text-gray-500 hover:text-gray-800 sm:inline">@User.Identity?.Name</a>
+        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+            <button type="submit" class="rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200">Wyloguj</button>
+        </form>
+    </div>
+}
+else
+{
+    <div class="flex items-center gap-2">
+        <a asp-area="Identity" asp-page="/Account/Login"
+           class="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100">Zaloguj się</a>
+        <a asp-area="Identity" asp-page="/Account/Register"
+           class="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">Rejestracja</a>
+    </div>
+}
