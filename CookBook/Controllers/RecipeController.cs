@@ -148,6 +148,48 @@ public class RecipeController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddComment(int recipeId, string content, int? replyToId)
+    {
+        var result = await _service.AddCommentAsync(recipeId, CurrentUserId, content, replyToId);
+        if (!result.Success)
+        {
+            TempData["Error"] = result.Error;
+        }
+
+        return RedirectToAction(nameof(Details), new { id = recipeId });
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteComment(int recipeId, int commentId)
+    {
+        var result = await _service.DeleteCommentAsync(commentId, CurrentUserId, IsModerator);
+        if (!result.Success)
+        {
+            TempData["Error"] = result.Error;
+        }
+
+        return RedirectToAction(nameof(Details), new { id = recipeId });
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleCommentReaction(int recipeId, int commentId, int reactionId)
+    {
+        var result = await _service.ToggleCommentReactionAsync(commentId, CurrentUserId, reactionId);
+        if (!result.Success)
+        {
+            TempData["Error"] = result.Error;
+        }
+
+        return RedirectToAction(nameof(Details), new { id = recipeId });
+    }
+
     private async Task<bool> UserCanModify(int recipeId)
     {
         var details = await _service.GetDetailsAsync(recipeId);
