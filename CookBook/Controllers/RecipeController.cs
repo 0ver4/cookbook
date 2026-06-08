@@ -10,11 +10,16 @@ namespace CookBook.Controllers;
 public class RecipeController : Controller
 {
     private readonly IRecipeService _service;
+    private readonly IShoppingListService _shoppingListService;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public RecipeController(IRecipeService service, UserManager<ApplicationUser> userManager)
+    public RecipeController(
+        IRecipeService service,
+        IShoppingListService shoppingListService,
+        UserManager<ApplicationUser> userManager)
     {
         _service = service;
+        _shoppingListService = shoppingListService;
         _userManager = userManager;
     }
 
@@ -39,6 +44,13 @@ public class RecipeController : Controller
 
         ViewBag.CanEdit = User.Identity?.IsAuthenticated == true
                           && (recipe.OwnerId == CurrentUserId || IsModerator);
+
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            var lists = await _shoppingListService.GetForUserAsync(CurrentUserId);
+            ViewBag.ShoppingLists = lists.Select(l => new LookupItem(l.Id, l.Name)).ToList();
+        }
+
         return View(recipe);
     }
 
