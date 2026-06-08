@@ -16,6 +16,18 @@ public record RecipeIngredientLine(string IngredientName, double Amount, string 
 /// <summary>Pojedynczy krok w widoku szczegółów.</summary>
 public record RecipeStepLine(int Order, string Content);
 
+public record CommentReactionDto(int ReactionId, string ReactionName, string ReactionImageUrl, int Count, bool UserReacted);
+
+public record CommentDto(
+    int Id,
+    int UserId,
+    string AuthorName,
+    string Content,
+    DateTime CreatedAt,
+    int? ReplyToId,
+    List<CommentDto>? Replies,
+    IReadOnlyList<CommentReactionDto> Reactions);
+
 /// <summary>Pełne dane przepisu do widoku szczegółów.</summary>
 public record RecipeDetailsDto(
     int Id,
@@ -34,4 +46,5 @@ public record RecipeDetailsDto(
     IReadOnlyList<RecipeIngredientLine> Ingredients,
     IReadOnlyList<RecipeStepLine> Steps,
     IReadOnlyList<string> Categories,
-    IReadOnlyList<string> Tags);
+    IReadOnlyList<string> Tags,
+    IReadOnlyList<CommentDto> Comments);

@@ -1,0 +1,134 @@
+@* Partial view dla jednego komentarza (używany rekurencyjnie dla odpowiedzi) *@
+@model CookBook.Dtos.CommentDto
+
+@{
+    var recipeId = (int)ViewData["RecipeId"]!;
+    var isAuthenticated = (bool)ViewData["IsAuthenticated"]!;
+    var currentUserId = ViewData["CurrentUserId"] as int?;
+    var isModerator = ViewData["IsModerator"] as bool? ?? false;
+    var isReply = Model.ReplyToId.HasValue;
+    var formId = $"reply-form-{Model.Id}";
+    var canDelete = isAuthenticated && (currentUserId == Model.UserId || isModerator);
+
+    string ReactionEmoji(int reactionId) => reactionId switch
+    {
+        1 => "👍",
+        2 => "❤️",
+        3 => "😋",
+        4 => "👎",
+        _ => "👍"
+    };
+}
+
+<div class="@(isReply ? "ml-8 border-l-2 border-indigo-100 pl-4" : "rounded-lg border border-gray-100 bg-white p-4 shadow-sm")">
+    <div class="mb-2 flex items-center justify-between">
+        <span class="font-medium text-gray-900">@Model.AuthorName</span>
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-500">@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+            @if (canDelete)
+            {
+                <form asp-controller="Recipe" asp-action="DeleteComment" method="post" class="inline">
+                    <input type="hidden" name="recipeId" value="@recipeId" />
+                    <input type="hidden" name="commentId" value="@Model.Id" />
+                    <button type="submit"
+                            onclick="return confirm('Usunąć ten komentarz?')"
+                            class="text-xs text-red-400 hover:text-red-600 focus:outline-none">
+                        Usuń
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+    <p class="mb-3 text-sm text-gray-700">@Model.Content</p>
+
+    <div class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-3">
+        @if (isAuthenticated)
+        {
+            <!-- Przyciski reakcji -->
+            <form asp-controller="Recipe" asp-action="ToggleCommentReaction" method="post" class="inline">
+                <input type="hidden" name="recipeId" value="@recipeId" />
+                <input type="hidden" name="commentId" value="@Model.Id" />
+                <input type="hidden" name="reactionId" value="1" />
+                <button type="submit" class="text-xs text-gray-500 hover:text-indigo-600 focus:outline-none">👍 Lubię to</button>
+            </form>
+            <form asp-controller="Recipe" asp-action="ToggleCommentReaction" method="post" class="inline">
+                <input type="hidden" name="recipeId" value="@recipeId" />
+                <input type="hidden" name="commentId" value="@Model.Id" />
+                <input type="hidden" name="reactionId" value="2" />
+                <button type="submit" class="text-xs text-gray-500 hover:text-red-500 focus:outline-none">❤️ Serduszko</button>
+            </form>
+            <form asp-controller="Recipe" asp-action="ToggleCommentReaction" method="post" class="inline">
+                <input type="hidden" name="recipeId" value="@recipeId" />
+                <input type="hidden" name="commentId" value="@Model.Id" />
+                <input type="hidden" name="reactionId" value="3" />
+                <button type="submit" class="text-xs text-gray-500 hover:text-amber-500 focus:outline-none">😋 Pyszne</button>
+            </form>
+            <form asp-controller="Recipe" asp-action="ToggleCommentReaction" method="post" class="inline">
+                <input type="hidden" name="recipeId" value="@recipeId" />
+                <input type="hidden" name="commentId" value="@Model.Id" />
+                <input type="hidden" name="reactionId" value="4" />
+                <button type="submit" class="text-xs text-gray-500 hover:text-gray-800 focus:outline-none">👎 Nie lubię</button>
+            </form>
+
+            <!-- Przycisk "Odpowiedz" -->
+            <button type="button"
+                    onclick="document.getElementById('@formId').classList.toggle('hidden')"
+                    class="text-xs font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none">
+                Odpowiedz
+            </button>
+        }
+
+        <!-- Podsumowanie reakcji -->
+        @if (Model.Reactions.Any())
+        {
+            <div class="ml-auto flex flex-wrap gap-2 text-xs">
+                @foreach (var reaction in Model.Reactions)
+                {
+                    <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-gray-600">
+                        @ReactionEmoji(reaction.ReactionId) @reaction.Count
+                    </span>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Formularz odpowiedzi (domyślnie ukryty) -->
+    @if (isAuthenticated)
+    {
+        <div id="@formId" class="mt-3 hidden">
+            <form asp-controller="Recipe" asp-action="AddComment" method="post">
+                <input type="hidden" name="recipeId" value="@recipeId" />
+                <input type="hidden" name="replyToId" value="@Model.Id" />
+                <textarea name="content" rows="2"
+                          class="w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          placeholder="Odpowiedz na komentarz @Model.AuthorName..." required></textarea>
+                <div class="mt-1 flex justify-end gap-2">
+                    <button type="button"
+                            onclick="document.getElementById('@formId').classList.add('hidden')"
+                            class="rounded px-3 py-1 text-xs text-gray-500 hover:text-gray-700">
+                        Anuluj
+                    </button>
+                    <button type="submit" class="rounded bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-700">
+                        Wyślij
+                    </button>
+                </div>
+            </form>
+        </div>
+    }
+
+    <!-- Zagnieżdżone odpowiedzi -->
+    @if (Model.Replies is { Count: > 0 })
+    {
+        var replyVd = new ViewDataDictionary(ViewData);
+        replyVd["RecipeId"] = recipeId;
+        replyVd["IsAuthenticated"] = isAuthenticated;
+        replyVd["CurrentUserId"] = currentUserId;
+        replyVd["IsModerator"] = isModerator;
+        <div class="mt-4 space-y-3">
+            @foreach (var reply in Model.Replies)
+            {
+                @await Html.PartialAsync("_Comment", reply, replyVd)
+            }
+        </div>
+    }
+</div>
