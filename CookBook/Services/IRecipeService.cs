@@ -19,5 +19,6 @@ public interface IRecipeService
     Task<(bool Success, string? Error)> DeleteAsync(int id, int userId, bool isModerator);
     
     Task<(bool Success, string? Error)> AddCommentAsync(int recipeId, int userId, string content, int? replyToId = null);
+    Task<(bool Success, string? Error)> DeleteCommentAsync(int commentId, int userId, bool isModerator);
     Task<(bool Success, string? Error)> ToggleCommentReactionAsync(int commentId, int userId, int reactionId);
 }

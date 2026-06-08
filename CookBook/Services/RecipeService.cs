@@ -305,6 +305,19 @@ public class RecipeService : IRecipeService
         return (true, null);
     }
 
+    public async Task<(bool Success, string? Error)> DeleteCommentAsync(int commentId, int userId, bool isModerator)
+    {
+        var comment = await _comments.Query().FirstOrDefaultAsync(c => c.Id == commentId);
+        if (comment is null)
+            return (false, "Komentarz nie istnieje.");
+        if (comment.UserId != userId && !isModerator)
+            return (false, "Brak uprawnień.");
+
+        _comments.Remove(comment);
+        await _comments.SaveChangesAsync();
+        return (true, null);
+    }
+
     public async Task<(bool Success, string? Error)> ToggleCommentReactionAsync(int commentId, int userId, int reactionId)
     {
         var existingReaction = (await _commentReactions.GetAllAsync())
