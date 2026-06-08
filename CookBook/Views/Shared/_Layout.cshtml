@@ -25,6 +25,10 @@
     <title>@ViewData["Title"] - CookBook</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="~/CookBook.styles.css" asp-append-version="true" />
+    <style>
+        /* Ukryj pusty box podsumowania walidacji, gdy nie ma błędów */
+        .validation-summary-valid { display: none; }
+    </style>
 </head>
 <body>
 <header>
