@@ -11,7 +11,9 @@ public record ExistingImage(int ImageId, string Url);
 
 public class RecipeIngredientInput
 {
-    public int IngredientId { get; set; }
+    // Nazwa wpisywana ręcznie; jeśli składnik nie istnieje, zostanie utworzony.
+    [MaxLength(100)]
+    public string? IngredientName { get; set; }
 
     [Range(0.01, 100000, ErrorMessage = "Ilość musi być większa od zera.")]
     public double Amount { get; set; }
