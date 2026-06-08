@@ -1,0 +1,57 @@
+@model IReadOnlyList<CookBook.Services.NotificationDto>
+@{
+    ViewData["Title"] = "Powiadomienia";
+
+    string Label(CookBook.Services.NotificationDto n) => n.TypeName switch
+    {
+        "NowyKomentarz"          => $"{n.TriggeredByName ?? "Ktoś"} skomentował(a) Twój przepis \"{n.RecipeName}\"",
+        "OdpowiedzNaKomentarz"   => $"{n.TriggeredByName ?? "Ktoś"} odpowiedział(a) na Twój komentarz w \"{n.RecipeName}\"",
+        "NowaRecenzja"           => $"{n.TriggeredByName ?? "Ktoś"} ocenił(a) Twój przepis \"{n.RecipeName}\"",
+        "ZgloszenieRozpatrzone"  => "Twoje zgłoszenie zostało rozpatrzone",
+        _                        => n.TypeName
+    };
+}
+
+<div class="max-w-2xl mx-auto py-8 px-4">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-800">Powiadomienia</h1>
+        @if (Model.Any(n => !n.IsRead))
+        {
+            <form asp-action="MarkAllAsRead" method="post">
+                <button type="submit" class="text-sm text-indigo-600 hover:underline">Oznacz wszystkie jako przeczytane</button>
+            </form>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="text-center text-gray-500 text-sm py-12">Brak powiadomień.</p>
+    }
+    else
+    {
+        <div class="space-y-2">
+            @foreach (var n in Model)
+            {
+                <div class="flex items-start gap-3 rounded-lg border p-4 @(n.IsRead ? "bg-white border-gray-100" : "bg-indigo-50 border-indigo-200")">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm text-gray-800 @(n.IsRead ? "" : "font-medium")">@Label(n)</p>
+                        <p class="mt-1 text-xs text-gray-400">@n.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        @if (n.RecipeId.HasValue)
+                        {
+                            <a asp-controller="Recipe" asp-action="Details" asp-route-id="@n.RecipeId"
+                               class="text-xs text-indigo-600 hover:underline">Zobacz przepis</a>
+                        }
+                        @if (!n.IsRead)
+                        {
+                            <form asp-action="MarkAsRead" asp-route-id="@n.Id" method="post">
+                                <button type="submit" class="text-xs text-gray-400 hover:text-gray-600">✓</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
