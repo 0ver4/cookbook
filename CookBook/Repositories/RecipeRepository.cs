@@ -41,7 +41,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
     {
         return await Set
             .Include(r => r.Steps)
-            .Include(r => r.Ingredients)
+            .Include(r => r.Ingredients).ThenInclude(i => i.Ingredient)
             .Include(r => r.Categories)
             .Include(r => r.Tags)
             .Include(r => r.Images).ThenInclude(i => i.Image)
