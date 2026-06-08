@@ -33,6 +33,9 @@ builder.Services.AddScoped<IShoppingListRepository, ShoppingListRepository>();
 builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
 builder.Services.AddScoped<IShoppingListPdfService, ShoppingListPdfService>();
 
+builder.Services.AddScoped<IMealPlanRepository, MealPlanRepository>();
+builder.Services.AddScoped<IMealPlanService, MealPlanService>();
+
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
         options.SignIn.RequireConfirmedAccount = false;
         options.Password.RequiredLength = 6;
