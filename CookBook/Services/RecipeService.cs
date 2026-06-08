@@ -1,3 +1,4 @@
+using CookBook.Data;
 using CookBook.Dtos;
 using CookBook.Models;
 using CookBook.Repositories;
@@ -18,6 +19,7 @@ public class RecipeService : IRecipeService
     private readonly IRepository<Comment> _comments;
     private readonly IRepository<CommentReaction> _commentReactions;
     private readonly INotificationService _notifications;
+    private readonly CookBookContext _db;
 
     public RecipeService(
         IRecipeRepository recipes,
@@ -29,7 +31,8 @@ public class RecipeService : IRecipeService
         IRepository<Tag> tags,
         IRepository<Comment> comments,
         IRepository<CommentReaction> commentReactions,
-        INotificationService notifications)
+        INotificationService notifications,
+        CookBookContext db)
     {
         _recipes = recipes;
         _imageService = imageService;
@@ -41,6 +44,7 @@ public class RecipeService : IRecipeService
         _comments = comments;
         _commentReactions = commentReactions;
         _notifications = notifications;
+        _db = db;
     }
 
     public async Task<IReadOnlyList<RecipeListItemDto>> GetListAsync()
@@ -313,8 +317,8 @@ public class RecipeService : IRecipeService
         if (comment.UserId != userId && !isModerator)
             return (false, "Brak uprawnień.");
 
-        _comments.Remove(comment);
-        await _comments.SaveChangesAsync();
+        // Procedura usuwa najpierw odpowiedzi, potem komentarz-rodzica
+        await _db.Database.ExecuteSqlRawAsync("EXEC usp_DeleteComment @p0", commentId);
         return (true, null);
     }
 
