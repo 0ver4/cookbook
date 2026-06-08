@@ -2,6 +2,7 @@ using CookBook.Dtos;
 using CookBook.Models;
 using CookBook.Repositories;
 using CookBook.ViewModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace CookBook.Services;
 
@@ -116,7 +117,7 @@ public class RecipeService : IRecipeService
             DifficultyLevelId = r.DifficultyLevelId,
             Ingredients = r.Ingredients.Select(i => new RecipeIngredientInput
             {
-                IngredientId = i.IngredientId,
+                IngredientName = i.Ingredient.Name,
                 Amount = i.Amount,
                 UnitId = i.UnitId
             }).ToList(),
@@ -152,7 +153,8 @@ public class RecipeService : IRecipeService
             CreatedAt = DateTime.UtcNow
         };
 
-        ApplyStepsAndIngredients(recipe, vm);
+        ApplySteps(recipe, vm);
+        await ApplyIngredientsAsync(recipe, vm);
         ApplyCategoriesAndTags(recipe, vm);
 
         var imageError = await AddNewImagesAsync(recipe, vm, userId);
@@ -190,7 +192,8 @@ public class RecipeService : IRecipeService
         recipe.Ingredients.Clear();
         recipe.Categories.Clear();
         recipe.Tags.Clear();
-        ApplyStepsAndIngredients(recipe, vm);
+        ApplySteps(recipe, vm);
+        await ApplyIngredientsAsync(recipe, vm);
         ApplyCategoriesAndTags(recipe, vm);
 
         RemoveSelectedImages(recipe, vm);
@@ -226,30 +229,55 @@ public class RecipeService : IRecipeService
     {
         if (vm.DifficultyLevelId <= 0)
             return "Wybierz poziom trudności.";
-        if (vm.Ingredients.Count == 0)
+        if (!vm.Ingredients.Any(i => !string.IsNullOrWhiteSpace(i.IngredientName)))
             return "Dodaj przynajmniej jeden składnik.";
         if (vm.Steps.Count == 0)
             return "Dodaj przynajmniej jeden krok.";
         return null;
     }
 
-    private static void ApplyStepsAndIngredients(Recipe recipe, RecipeFormViewModel vm)
+    private static void ApplySteps(Recipe recipe, RecipeFormViewModel vm)
     {
         var order = 1;
         foreach (var step in vm.Steps)
             recipe.Steps.Add(new RecipeStep { Order = order++, Content = step.Content });
+    }
 
-        // Łączymy duplikaty tego samego składnika (klucz złożony RecipeId+IngredientId)
-        foreach (var group in vm.Ingredients.GroupBy(i => i.IngredientId))
+    /// <summary>
+    /// Buduje listę składników przepisu. Składniki dopasowuje po nazwie (bez rozróżniania
+    /// wielkości liter); jeśli nazwa nie istnieje, tworzy nowy składnik (encja użytkownika,
+    /// nie słownikowa). Duplikaty tej samej nazwy w formularzu sumuje.
+    /// </summary>
+    private async Task ApplyIngredientsAsync(Recipe recipe, RecipeFormViewModel vm)
+    {
+        var defaultUnitId = await GetDefaultUnitIdAsync();
+
+        var groups = vm.Ingredients
+            .Where(i => !string.IsNullOrWhiteSpace(i.IngredientName))
+            .GroupBy(i => i.IngredientName!.Trim(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var group in groups)
         {
-            var first = group.First();
-            recipe.Ingredients.Add(new RecipeIngredient
-            {
-                IngredientId = group.Key,
-                Amount = group.Sum(i => i.Amount),
-                UnitId = first.UnitId
-            });
+            var name = group.Key.Trim();
+            var amount = group.Sum(i => i.Amount);
+            var unitId = group.First().UnitId;
+
+            var existing = await _ingredients.Query().FirstOrDefaultAsync(i => i.Name == name);
+
+            var line = new RecipeIngredient { Amount = amount, UnitId = unitId };
+            if (existing is not null)
+                line.IngredientId = existing.Id;
+            else
+                line.Ingredient = new Ingredient { Name = name, UnitId = unitId ?? defaultUnitId };
+
+            recipe.Ingredients.Add(line);
         }
+    }
+
+    private async Task<int> GetDefaultUnitIdAsync()
+    {
+        var units = await _units.GetAllAsync();
+        return units.OrderBy(u => u.Id).First().Id;
     }
 
     private static void ApplyCategoriesAndTags(Recipe recipe, RecipeFormViewModel vm)
