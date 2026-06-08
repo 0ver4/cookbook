@@ -34,6 +34,8 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
             .Include(r => r.Categories).ThenInclude(c => c.Category)
             .Include(r => r.Tags).ThenInclude(t => t.Tag)
             .Include(r => r.Reviews)
+            .Include(r => r.Comments).ThenInclude(c => c.User)
+            .Include(r => r.Comments).ThenInclude(c => c.Reactions).ThenInclude(cr => cr.Reaction).ThenInclude(re => re.Image)
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 
