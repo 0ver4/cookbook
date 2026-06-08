@@ -3,6 +3,7 @@
 @model CookBook.ViewModels.MealPlanWeekViewModel
 @{
     ViewData["Title"] = "Plan posiłków";
+    ViewData["HeaderWidth"] = "max-w-6xl";
     string[] dayNames = { "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela" };
     var weekEnd = Model.WeekStart.AddDays(6);
 }
