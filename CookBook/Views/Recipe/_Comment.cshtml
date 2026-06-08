@@ -4,14 +4,40 @@
 @{
     var recipeId = (int)ViewData["RecipeId"]!;
     var isAuthenticated = (bool)ViewData["IsAuthenticated"]!;
+    var currentUserId = ViewData["CurrentUserId"] as int?;
+    var isModerator = ViewData["IsModerator"] as bool? ?? false;
     var isReply = Model.ReplyToId.HasValue;
     var formId = $"reply-form-{Model.Id}";
+    var canDelete = isAuthenticated && (currentUserId == Model.UserId || isModerator);
+
+    string ReactionEmoji(int reactionId) => reactionId switch
+    {
+        1 => "👍",
+        2 => "❤️",
+        3 => "😋",
+        4 => "👎",
+        _ => "👍"
+    };
 }
 
 <div class="@(isReply ? "ml-8 border-l-2 border-indigo-100 pl-4" : "rounded-lg border border-gray-100 bg-white p-4 shadow-sm")">
     <div class="mb-2 flex items-center justify-between">
         <span class="font-medium text-gray-900">@Model.AuthorName</span>
-        <span class="text-xs text-gray-500">@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-500">@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+            @if (canDelete)
+            {
+                <form asp-controller="Recipe" asp-action="DeleteComment" method="post" class="inline">
+                    <input type="hidden" name="recipeId" value="@recipeId" />
+                    <input type="hidden" name="commentId" value="@Model.Id" />
+                    <button type="submit"
+                            onclick="return confirm('Usunąć ten komentarz?')"
+                            class="text-xs text-red-400 hover:text-red-600 focus:outline-none">
+                        Usuń
+                    </button>
+                </form>
+            }
+        </div>
     </div>
     <p class="mb-3 text-sm text-gray-700">@Model.Content</p>
 
@@ -44,7 +70,7 @@
                 <button type="submit" class="text-xs text-gray-500 hover:text-gray-800 focus:outline-none">👎 Nie lubię</button>
             </form>
 
-            <!-- Przycisk "Odpowiedz" — pokazuje/ukrywa formularz -->
+            <!-- Przycisk "Odpowiedz" -->
             <button type="button"
                     onclick="document.getElementById('@formId').classList.toggle('hidden')"
                     class="text-xs font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none">
@@ -59,7 +85,7 @@
                 @foreach (var reaction in Model.Reactions)
                 {
                     <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-gray-600">
-                        <img src="@reaction.ReactionImageUrl" class="h-4 w-4" alt="@reaction.ReactionName" /> @reaction.Count
+                        @ReactionEmoji(reaction.ReactionId) @reaction.Count
                     </span>
                 }
             </div>
@@ -96,6 +122,8 @@
         var replyVd = new ViewDataDictionary(ViewData);
         replyVd["RecipeId"] = recipeId;
         replyVd["IsAuthenticated"] = isAuthenticated;
+        replyVd["CurrentUserId"] = currentUserId;
+        replyVd["IsModerator"] = isModerator;
         <div class="mt-4 space-y-3">
             @foreach (var reply in Model.Replies)
             {

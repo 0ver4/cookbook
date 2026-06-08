@@ -111,6 +111,9 @@
             var commentVd = new ViewDataDictionary(ViewData);
             commentVd["RecipeId"] = Model.Id;
             commentVd["IsAuthenticated"] = Context.User.Identity?.IsAuthenticated == true;
+            var currentUserIdStr = Context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            commentVd["CurrentUserId"] = currentUserIdStr != null ? (int?)int.Parse(currentUserIdStr) : null;
+            commentVd["IsModerator"] = Context.User.IsInRole("Moderator");
         }
         <div class="space-y-6">
             @foreach (var comment in Model.Comments)
