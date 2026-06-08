@@ -17,4 +17,7 @@ public interface IRecipeService
     Task<(bool Success, string? Error, int RecipeId)> CreateAsync(RecipeFormViewModel vm, int userId);
     Task<(bool Success, string? Error)> UpdateAsync(RecipeFormViewModel vm, int userId, bool isModerator);
     Task<(bool Success, string? Error)> DeleteAsync(int id, int userId, bool isModerator);
+    
+    Task<(bool Success, string? Error)> AddCommentAsync(int recipeId, int userId, string content, int? replyToId = null);
+    Task<(bool Success, string? Error)> ToggleCommentReactionAsync(int commentId, int userId, int reactionId);
 }
