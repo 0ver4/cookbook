@@ -1,0 +1,99 @@
+@using CookBook.ViewModels
+@model CookBook.Dtos.ShoppingListDetailsDto
+@{
+    ViewData["Title"] = Model.Name;
+    var recipes = ViewBag.Recipes as List<LookupItem> ?? new List<LookupItem>();
+    var units = ViewBag.Units as List<LookupItem> ?? new List<LookupItem>();
+    var ingredientNames = ViewBag.Ingredients as List<string> ?? new List<string>();
+}
+
+<div class="mx-auto max-w-3xl px-4 py-6">
+    <div class="mb-4 flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">@Model.Name</h1>
+            <p class="mt-1 text-sm text-gray-500">@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</p>
+        </div>
+        <div class="flex gap-2">
+            <a asp-action="DownloadPdf" asp-route-id="@Model.Id" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">⬇ PDF</a>
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Usunąć całą listę?');">
+                <button type="submit" class="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">Usuń listę</button>
+            </form>
+        </div>
+    </div>
+
+    @* Dodawanie pozycji ręcznie *@
+    <form asp-action="AddItem" method="post" class="mb-3 flex gap-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <input type="hidden" name="listId" value="@Model.Id" />
+        <input name="ingredientName" list="ingredient-suggestions" placeholder="Składnik (np. Mleko)" class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+        <datalist id="ingredient-suggestions">
+            @foreach (var name in ingredientNames)
+            {
+                <option value="@name"></option>
+            }
+        </datalist>
+        <input name="amount" type="number" step="any" min="0" placeholder="Ilość" class="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+        <select name="unitId" class="w-32 rounded-lg border border-gray-300 px-2 py-2 text-sm">
+            <option value="">dom.</option>
+            @foreach (var u in units)
+            {
+                <option value="@u.Id">@u.Name</option>
+            }
+        </select>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Dodaj</button>
+    </form>
+
+    @* Generowanie z przepisu *@
+    @if (recipes.Any())
+    {
+        <form asp-action="GenerateFromRecipe" method="post" class="mb-6 flex gap-2 rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+            <input type="hidden" name="listId" value="@Model.Id" />
+            <select name="recipeId" class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                @foreach (var r in recipes)
+                {
+                    <option value="@r.Id">@r.Name</option>
+                }
+            </select>
+            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Dodaj składniki z przepisu</button>
+        </form>
+    }
+
+    @* Pozycje *@
+    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        @if (!Model.Items.Any())
+        {
+            <p class="px-4 py-6 text-center text-gray-400">Lista jest pusta — dodaj składniki ręcznie lub z przepisu.</p>
+        }
+        else
+        {
+            <ul class="divide-y divide-gray-100">
+                @foreach (var item in Model.Items)
+                {
+                    <li class="flex items-center justify-between px-4 py-2.5 @(item.IsChecked ? "bg-gray-50" : "")">
+                        <div class="flex items-center gap-3">
+                            <form asp-action="Toggle" method="post">
+                                <input type="hidden" name="listId" value="@Model.Id" />
+                                <input type="hidden" name="ingredientId" value="@item.IngredientId" />
+                                <input type="hidden" name="unitId" value="@item.UnitId" />
+                                <button type="submit" class="text-lg" title="Odhacz">@(item.IsChecked ? "☑" : "☐")</button>
+                            </form>
+                            <span class="text-sm @(item.IsChecked ? "text-gray-400 line-through" : "text-gray-800")">@item.IngredientName</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-gray-500">@item.Amount.ToString("0.##") @item.UnitName</span>
+                            <form asp-action="RemoveItem" method="post">
+                                <input type="hidden" name="listId" value="@Model.Id" />
+                                <input type="hidden" name="ingredientId" value="@item.IngredientId" />
+                                <input type="hidden" name="unitId" value="@item.UnitId" />
+                                <button type="submit" class="text-gray-300 hover:text-red-600" title="Usuń">✕</button>
+                            </form>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="mt-6">
+        <a asp-action="Index" class="text-sm text-indigo-600 hover:underline">← Wróć do list</a>
+    </div>
+</div>
