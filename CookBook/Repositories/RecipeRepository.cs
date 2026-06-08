@@ -16,7 +16,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
             .Where(r => r.IsPublished && !r.IsHidden)
             .Include(r => r.User)
             .Include(r => r.DifficultyLevel)
-            .Include(r => r.Images.OrderBy(i => i.Order)).ThenInclude(i => i.Image)
+            .Include(r => r.Images)
             .Include(r => r.Reviews)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
@@ -27,7 +27,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return await Set.AsNoTracking()
             .Include(r => r.User)
             .Include(r => r.DifficultyLevel)
-            .Include(r => r.Images.OrderBy(i => i.Order)).ThenInclude(i => i.Image)
+            .Include(r => r.Images)
             .Include(r => r.Steps.OrderBy(s => s.Order))
             .Include(r => r.Ingredients).ThenInclude(i => i.Ingredient).ThenInclude(ing => ing.Unit)
             .Include(r => r.Ingredients).ThenInclude(i => i.Unit)
@@ -35,7 +35,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
             .Include(r => r.Tags).ThenInclude(t => t.Tag)
             .Include(r => r.Reviews)
             .Include(r => r.Comments).ThenInclude(c => c.User)
-            .Include(r => r.Comments).ThenInclude(c => c.Reactions).ThenInclude(cr => cr.Reaction).ThenInclude(re => re.Image)
+            .Include(r => r.Comments).ThenInclude(c => c.Reactions).ThenInclude(cr => cr.Reaction)
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 
@@ -46,7 +46,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
             .Include(r => r.Ingredients).ThenInclude(i => i.Ingredient)
             .Include(r => r.Categories)
             .Include(r => r.Tags)
-            .Include(r => r.Images).ThenInclude(i => i.Image)
+            .Include(r => r.Images)
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 }
