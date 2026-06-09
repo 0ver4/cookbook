@@ -1,5 +1,6 @@
 ﻿@{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var inModeration = ViewContext.RouteData.Values["area"]?.ToString() == "Moderation";
 
     string Nav(string controller) => currentController == controller
         ? "bg-indigo-50 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -9,11 +10,11 @@
         ? "block bg-indigo-50 text-indigo-700 px-3 py-2 rounded-md text-base font-medium"
         : "block text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium transition-colors";
 
-    string NavMod(string controller) => currentController == controller
+    string NavMod(bool active) => active
         ? "bg-rose-50 text-rose-700 px-3 py-2 rounded-md text-sm font-medium transition-colors"
         : "text-rose-700 hover:bg-rose-50 hover:text-rose-900 px-3 py-2 rounded-md text-sm font-medium transition-colors";
 
-    string NavModMobile(string controller) => currentController == controller
+    string NavModMobile(bool active) => active
         ? "block bg-rose-50 text-rose-700 px-3 py-2 rounded-md text-base font-medium"
         : "block text-rose-700 hover:bg-rose-50 hover:text-rose-900 px-3 py-2 rounded-md text-base font-medium transition-colors";
 }
@@ -48,8 +49,7 @@
                     }
                     @if (User.IsInRole("Moderator"))
                     {
-                        <a class="@NavMod("Category")" asp-area="" asp-controller="Category" asp-action="Index">🛡️ Słowniki</a>
-                        <a class="@NavMod("Report")" asp-area="" asp-controller="Report" asp-action="Index">🚩 Zgłoszenia @await Component.InvokeAsync("ReportBadge")</a>
+                        <a class="@NavMod(inModeration)" asp-area="Moderation" asp-controller="Reports" asp-action="Index">🛡️ Moderacja @await Component.InvokeAsync("ReportBadge")</a>
                     }
                     <a class="@Nav("Profile")" asp-area="" asp-controller="Profile" asp-action="Index">👤 Moje Konto</a>
                 </div>
@@ -87,8 +87,7 @@
                 }
                 @if (User.IsInRole("Moderator"))
                 {
-                    <a class="@NavModMobile("Category")" asp-area="" asp-controller="Category" asp-action="Index">🛡️ Słowniki</a>
-                    <a class="@NavModMobile("Report")" asp-area="" asp-controller="Report" asp-action="Index">🚩 Zgłoszenia @await Component.InvokeAsync("ReportBadge")</a>
+                    <a class="@NavModMobile(inModeration)" asp-area="Moderation" asp-controller="Reports" asp-action="Index">🛡️ Moderacja @await Component.InvokeAsync("ReportBadge")</a>
                 }
                 <a class="@NavMobile("Profile")" asp-area="" asp-controller="Profile" asp-action="Index">👤 Moje Konto</a>
             </div>

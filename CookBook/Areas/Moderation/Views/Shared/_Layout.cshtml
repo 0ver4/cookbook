@@ -1,0 +1,17 @@
+@* Layout panelu moderacji — osadzony w głównym layoucie strony.
+   Dodaje nagłówek panelu i pasek zakładek (ModerationNav). *@
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="mx-auto max-w-5xl px-4 pt-6">
+    <h1 class="text-2xl font-bold text-gray-800">🛡️ Panel moderacji</h1>
+    @await Component.InvokeAsync("ModerationNav")
+</div>
+
+@RenderBody()
+
+@* Przekaż sekcję Scripts z podstron (np. walidacja) do głównego layoutu *@
+@section Scripts {
+    @await RenderSectionAsync("Scripts", required: false)
+}

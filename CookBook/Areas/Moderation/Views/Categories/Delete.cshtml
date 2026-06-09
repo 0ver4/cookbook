@@ -1,12 +1,10 @@
 @model CookBook.Dtos.CategoryDto
 @{
     ViewData["Title"] = "Usuń kategorię";
-    ViewData["HeaderWidth"] = "max-w-lg";
 }
 
-<partial name="_PageHeader" model="@("Usuń kategorię")" />
-
-<div class="mx-auto max-w-lg px-4">
+<div class="mx-auto max-w-lg px-4 py-6">
+    <h2 class="mb-3 text-lg font-bold text-gray-800">Usuń kategorię</h2>
     <div class="rounded-lg border border-red-200 bg-white p-6 shadow-sm">
         <p class="mb-4 text-sm text-gray-700">
             Czy na pewno chcesz usunąć kategorię

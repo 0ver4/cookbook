@@ -3,30 +3,31 @@ using CookBook.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CookBook.Controllers;
+namespace CookBook.Areas.Moderation.Controllers;
 
 // Słowniki (kategorie, tagi itd.) edytuje moderator.
+[Area("Moderation")]
 [Authorize(Roles = "Moderator")]
-public class CategoryController : Controller
+public class CategoriesController : Controller
 {
     private readonly ICategoryService _service;
 
-    public CategoryController(ICategoryService service)
+    public CategoriesController(ICategoryService service)
     {
         _service = service;
     }
 
-    // GET: /Category
+    // GET: /Moderation/Categories
     public async Task<IActionResult> Index()
     {
         var categories = await _service.GetAllAsync();
         return View(categories);
     }
 
-    // GET: /Category/Create
+    // GET: /Moderation/Categories/Create
     public IActionResult Create() => View(new CreateCategoryDto());
 
-    // POST: /Category/Create
+    // POST: /Moderation/Categories/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateCategoryDto dto)
@@ -45,7 +46,7 @@ public class CategoryController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // GET: /Category/Edit/5
+    // GET: /Moderation/Categories/Edit/5
     public async Task<IActionResult> Edit(int id)
     {
         var category = await _service.GetByIdAsync(id);
@@ -55,7 +56,7 @@ public class CategoryController : Controller
         return View(new UpdateCategoryDto { Id = category.Id, Name = category.Name });
     }
 
-    // POST: /Category/Edit/5
+    // POST: /Moderation/Categories/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(UpdateCategoryDto dto)
@@ -74,7 +75,7 @@ public class CategoryController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // GET: /Category/Delete/5
+    // GET: /Moderation/Categories/Delete/5
     public async Task<IActionResult> Delete(int id)
     {
         var category = await _service.GetByIdAsync(id);
@@ -84,7 +85,7 @@ public class CategoryController : Controller
         return View(category);
     }
 
-    // POST: /Category/Delete/5
+    // POST: /Moderation/Categories/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
