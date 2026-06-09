@@ -1,0 +1,175 @@
+@using CookBook.Models
+@model CookBook.Dtos.ReportsViewModel
+@{
+    ViewData["Title"] = "Zgłoszenia";
+    var sr = Model.ShowResolved;
+
+    string StatusBadge(ReportStatus status) => status switch
+    {
+        ReportStatus.Pending => "<span class=\"rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700\">Oczekuje</span>",
+        ReportStatus.Resolved => "<span class=\"rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700\">Rozpatrzone</span>",
+        ReportStatus.Dismissed => "<span class=\"rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600\">Odrzucone</span>",
+        _ => ""
+    };
+}
+
+<partial name="_PageHeader" model="@("Zgłoszenia")" />
+
+<div class="mx-auto max-w-5xl px-4">
+    <div class="mb-4 flex items-center justify-between">
+        <div class="flex gap-2">
+            <a asp-action="Index" asp-route-showResolved="false"
+               class="@(sr ? "text-gray-600 hover:bg-gray-100" : "bg-indigo-50 text-indigo-700") rounded-md px-3 py-1.5 text-sm font-medium">
+                Oczekujące
+            </a>
+            <a asp-action="Index" asp-route-showResolved="true"
+               class="@(sr ? "bg-indigo-50 text-indigo-700" : "text-gray-600 hover:bg-gray-100") rounded-md px-3 py-1.5 text-sm font-medium">
+                Wszystkie
+            </a>
+        </div>
+    </div>
+
+    <!-- Zgłoszone przepisy -->
+    <h2 class="mb-2 text-lg font-bold text-gray-800">Przepisy (@Model.RecipeReports.Count)</h2>
+    <div class="mb-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Przepis</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Powód</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Zgłaszający</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
+                <th class="px-4 py-3 text-right font-semibold text-gray-600">Akcje</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+            @if (!Model.RecipeReports.Any())
+            {
+                <tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">Brak zgłoszeń.</td></tr>
+            }
+            @foreach (var r in Model.RecipeReports)
+            {
+                <tr class="hover:bg-gray-50 align-top">
+                    <td class="px-4 py-3">
+                        <a asp-controller="Recipe" asp-action="Details" asp-route-id="@r.RecipeId"
+                           class="font-medium text-indigo-600 hover:underline" target="_blank">@r.RecipeName</a>
+                    </td>
+                    <td class="px-4 py-3 text-gray-700">
+                        <p class="whitespace-pre-line">@r.Reason</p>
+                        <p class="mt-1 text-xs text-gray-400">@r.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
+                    </td>
+                    <td class="px-4 py-3 text-gray-700">@r.ReportedByName</td>
+                    <td class="px-4 py-3">
+                        @Html.Raw(StatusBadge(r.Status))
+                        @if (r.ResolvedByName != null)
+                        {
+                            <p class="mt-1 text-xs text-gray-400">@r.ResolvedByName, @r.ResolvedAt?.ToLocalTime().ToString("dd.MM.yyyy")</p>
+                        }
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        @if (r.Status == ReportStatus.Pending)
+                        {
+                            <div class="flex flex-wrap justify-end gap-1">
+                                <form asp-action="ResolveRecipe" method="post" class="inline">
+                                    <input type="hidden" name="id" value="@r.Id" />
+                                    <input type="hidden" name="showResolved" value="@sr" />
+                                    <button type="submit" class="rounded border border-green-300 px-2 py-1 text-xs text-green-700 hover:bg-green-50">Rozpatrz</button>
+                                </form>
+                                <form asp-action="DismissRecipe" method="post" class="inline">
+                                    <input type="hidden" name="id" value="@r.Id" />
+                                    <input type="hidden" name="showResolved" value="@sr" />
+                                    <button type="submit" class="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">Odrzuć</button>
+                                </form>
+                                <form asp-action="DeleteRecipe" method="post" class="inline">
+                                    <input type="hidden" name="id" value="@r.Id" />
+                                    <input type="hidden" name="showResolved" value="@sr" />
+                                    <button type="submit" onclick="return confirm('Usunąć ten przepis na stałe?')"
+                                            class="rounded border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50">Usuń przepis</button>
+                                </form>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-xs text-gray-400">—</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Zgłoszone komentarze -->
+    <h2 class="mb-2 text-lg font-bold text-gray-800">Komentarze (@Model.CommentReports.Count)</h2>
+    <div class="mb-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Komentarz</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Powód</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Zgłaszający</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
+                <th class="px-4 py-3 text-right font-semibold text-gray-600">Akcje</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+            @if (!Model.CommentReports.Any())
+            {
+                <tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">Brak zgłoszeń.</td></tr>
+            }
+            @foreach (var r in Model.CommentReports)
+            {
+                <tr class="hover:bg-gray-50 align-top">
+                    <td class="px-4 py-3 text-gray-700">
+                        <p class="whitespace-pre-line italic">„@r.CommentContent”</p>
+                        <p class="mt-1 text-xs text-gray-400">
+                            autor: @r.CommentAuthorName ·
+                            <a asp-controller="Recipe" asp-action="Details" asp-route-id="@r.RecipeId"
+                               class="text-indigo-600 hover:underline" target="_blank">przepis</a>
+                        </p>
+                    </td>
+                    <td class="px-4 py-3 text-gray-700">
+                        <p class="whitespace-pre-line">@r.Reason</p>
+                        <p class="mt-1 text-xs text-gray-400">@r.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
+                    </td>
+                    <td class="px-4 py-3 text-gray-700">@r.ReportedByName</td>
+                    <td class="px-4 py-3">
+                        @Html.Raw(StatusBadge(r.Status))
+                        @if (r.ResolvedByName != null)
+                        {
+                            <p class="mt-1 text-xs text-gray-400">@r.ResolvedByName, @r.ResolvedAt?.ToLocalTime().ToString("dd.MM.yyyy")</p>
+                        }
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        @if (r.Status == ReportStatus.Pending)
+                        {
+                            <div class="flex flex-wrap justify-end gap-1">
+                                <form asp-action="ResolveComment" method="post" class="inline">
+                                    <input type="hidden" name="id" value="@r.Id" />
+                                    <input type="hidden" name="showResolved" value="@sr" />
+                                    <button type="submit" class="rounded border border-green-300 px-2 py-1 text-xs text-green-700 hover:bg-green-50">Rozpatrz</button>
+                                </form>
+                                <form asp-action="DismissComment" method="post" class="inline">
+                                    <input type="hidden" name="id" value="@r.Id" />
+                                    <input type="hidden" name="showResolved" value="@sr" />
+                                    <button type="submit" class="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">Odrzuć</button>
+                                </form>
+                                <form asp-action="DeleteComment" method="post" class="inline">
+                                    <input type="hidden" name="id" value="@r.Id" />
+                                    <input type="hidden" name="showResolved" value="@sr" />
+                                    <button type="submit" onclick="return confirm('Usunąć ten komentarz na stałe?')"
+                                            class="rounded border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50">Usuń komentarz</button>
+                                </form>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-xs text-gray-400">—</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
