@@ -21,23 +21,32 @@ public class NotificationService(IRepository<Notification> repo) : INotification
 
     public async Task<IReadOnlyList<NotificationDto>> GetForUserAsync(int userId)
     {
-        return await repo.Query()
+        // Najpierw pobieramy encje z bazy (AsEnumerable), potem mapujemy w pamięci
+        // żeby móc wywołać metodę AuthorName (LINQ-to-SQL nie obsługuje własnych metod C#)
+        var entities = await repo.Query()
             .Where(n => n.UserId == userId)
             .Include(n => n.NotificationType)
             .Include(n => n.TriggeredByUser)
             .Include(n => n.Recipe)
             .OrderByDescending(n => n.CreatedAt)
-            .Select(n => new NotificationDto(
-                n.Id,
-                n.NotificationType.Name,
-                n.TriggeredByUser != null
-                    ? (n.TriggeredByUser.FirstName + " " + n.TriggeredByUser.LastName).Trim()
-                    : null,
-                n.Recipe != null ? n.Recipe.Name : null,
-                n.RecipeId,
-                n.IsRead,
-                n.CreatedAt))
             .ToListAsync();
+
+        return entities.Select(n => new NotificationDto(
+            n.Id,
+            n.NotificationType.Name,
+            n.TriggeredByUser != null ? AuthorName(n.TriggeredByUser) : null,
+            n.Recipe?.Name,
+            n.RecipeId,
+            n.IsRead,
+            n.CreatedAt)).ToList();
+    }
+
+    private static string AuthorName(ApplicationUser user)
+    {
+        var fullName = $"{user.FirstName} {user.LastName}".Trim();
+        return !string.IsNullOrWhiteSpace(fullName)
+            ? fullName
+            : (user.UserName ?? user.Email ?? "Użytkownik");
     }
 
     public async Task<int> GetUnreadCountAsync(int userId)
