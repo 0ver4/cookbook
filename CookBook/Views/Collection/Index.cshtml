@@ -1,0 +1,58 @@
+@model IReadOnlyList<CookBook.Dtos.CollectionSummaryDto>
+@{
+    ViewData["Title"] = "Moje kolekcje";
+}
+
+<div class="mx-auto max-w-3xl px-4 py-6">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-800">📚 Moje kolekcje</h1>
+    </div>
+
+    @* Formularz tworzenia nowej kolekcji *@
+    <div class="mb-8 rounded-xl border border-indigo-100 bg-indigo-50 p-5">
+        <h2 class="mb-3 text-sm font-semibold text-gray-700">Nowa kolekcja</h2>
+        <form asp-action="Create" method="post" class="flex gap-2">
+            <input type="text" name="name" maxlength="100" required placeholder="Nazwa kolekcji..."
+                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+                Utwórz
+            </button>
+        </form>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="rounded-xl border border-dashed border-gray-300 p-12 text-center">
+            <p class="text-4xl mb-3">📂</p>
+            <p class="text-gray-500">Nie masz jeszcze żadnych kolekcji.</p>
+            <p class="mt-1 text-sm text-gray-400">Utwórz pierwszą kolekcję, aby zapisywać ulubione przepisy.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid gap-4 sm:grid-cols-2">
+            @foreach (var col in Model)
+            {
+                <div class="group relative rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
+                    <a asp-action="Details" asp-route-id="@col.Id" class="block">
+                        <h3 class="font-semibold text-gray-800 group-hover:text-indigo-600">@col.Name</h3>
+                        <p class="mt-1 text-xs text-gray-400">
+                            @col.RecipeCount @(col.RecipeCount == 1 ? "przepis" : col.RecipeCount is >= 2 and <= 4 ? "przepisy" : "przepisów")
+                            · @col.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                        </p>
+                    </a>
+                    <form asp-action="Delete" asp-route-id="@col.Id" method="post"
+                          onsubmit="return confirm('Usunąć kolekcję „@col.Name"?')"
+                          class="absolute right-3 top-3">
+                        <button type="submit" class="rounded p-1 text-gray-300 hover:text-red-500" title="Usuń kolekcję">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+</div>
