@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CookBook.Models;
 
-public class Unit
+public class Unit : INamedEntity
 {
     public int Id { get; set; }
     
