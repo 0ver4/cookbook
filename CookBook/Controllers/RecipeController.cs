@@ -1,3 +1,4 @@
+using CookBook.Dtos;
 using CookBook.Models;
 using CookBook.Services;
 using CookBook.ViewModels;
@@ -28,10 +29,10 @@ public class RecipeController : Controller
 
     // GET: /Recipe
     [AllowAnonymous]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index([FromQuery] RecipeQuery query)
     {
-        var recipes = await _service.GetListAsync();
-        return View(recipes);
+        var vm = await _service.GetListAsync(query);
+        return View(vm);
     }
 
     // GET: /Recipe/Details/5

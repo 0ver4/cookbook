@@ -1,11 +1,12 @@
+using CookBook.Dtos;
 using CookBook.Models;
 
 namespace CookBook.Repositories;
 
 public interface IRecipeRepository : IRepository<Recipe>
 {
-    /// <summary>Przepisy z danymi potrzebnymi na listę (autor, trudność, zdjęcia, oceny).</summary>
-    Task<IReadOnlyList<Recipe>> GetListAsync();
+    /// <summary>Przepisy z filtrowaniem, sortowaniem i danymi na listę.</summary>
+    Task<IReadOnlyList<Recipe>> GetListAsync(RecipeQuery? query = null);
 
     /// <summary>Pełny przepis ze wszystkimi powiązaniami do widoku szczegółów.</summary>
     Task<Recipe?> GetDetailsAsync(int id);
