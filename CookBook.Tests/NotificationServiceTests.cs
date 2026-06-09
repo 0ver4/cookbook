@@ -41,14 +41,13 @@ public class NotificationServiceTests
         repo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
-        await svc.CreateAsync(userId: 5, typeId: 2, triggeredByUserId: 7, recipeId: 10, commentId: 3);
+        await svc.CreateAsync(userId: 5, typeId: 2, triggeredByUserId: 7, commentId: 3);
 
         // Assert
         Assert.NotNull(captured);
         Assert.Equal(5, captured.UserId);
         Assert.Equal(2, captured.NotificationTypeId);
         Assert.Equal(7, captured.TriggeredByUserId);
-        Assert.Equal(10, captured.RecipeId);
         Assert.Equal(3, captured.CommentId);
     }
 
@@ -61,7 +60,7 @@ public class NotificationServiceTests
         repo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
-        await svc.CreateAsync(userId: 1, typeId: 1);
+        await svc.CreateAsync(userId: 1, typeId: 1, triggeredByUserId: null, commentId: 1);
 
         // Assert
         repo.Verify(r => r.SaveChangesAsync(), Times.Once);
@@ -80,12 +79,10 @@ public class NotificationServiceTests
         repo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
 
         // Act
-        await svc.CreateAsync(userId: 1, typeId: 1);
+        await svc.CreateAsync(userId: 1, typeId: 1, triggeredByUserId: null, commentId: 1);
 
         // Assert
         Assert.Null(captured!.TriggeredByUserId);
-        Assert.Null(captured.RecipeId);
-        Assert.Null(captured.CommentId);
     }
 
     // -----------------------------------------------------------------------
@@ -142,8 +139,8 @@ public class NotificationServiceTests
         var (svc, repo) = Create();
         var data = new List<Notification>
         {
-            new() { Id = 1, UserId = 1, NotificationType = new NotificationType { Name = "NewComment" }, CreatedAt = DateTime.UtcNow },
-            new() { Id = 2, UserId = 2, NotificationType = new NotificationType { Name = "NewComment" }, CreatedAt = DateTime.UtcNow },
+            new() { Id = 1, UserId = 1, NotificationType = new NotificationType { Name = "NewComment" }, Comment = new Comment(), CreatedAt = DateTime.UtcNow },
+            new() { Id = 2, UserId = 2, NotificationType = new NotificationType { Name = "NewComment" }, Comment = new Comment(), CreatedAt = DateTime.UtcNow },
         };
         SetupQuery(repo, data);
 
@@ -171,8 +168,7 @@ public class NotificationServiceTests
                 CreatedAt = createdAt,
                 NotificationType = new NotificationType { Name = "Reply" },
                 TriggeredByUser = new ApplicationUser { UserName = "jan_kowalski" },
-                Recipe = new Recipe { Id = 5, Name = "Bigos" },
-                RecipeId = 5
+                Comment = new Comment { RecipeId = 5, Recipe = new Recipe { Id = 5, Name = "Bigos" } }
             }
         };
         SetupQuery(repo, data);
@@ -203,6 +199,7 @@ public class NotificationServiceTests
                 Id = 1, UserId = 1,
                 NotificationType = new NotificationType { Name = "NewComment" },
                 TriggeredByUser = null,
+                Comment = new Comment(),
                 CreatedAt = DateTime.UtcNow
             }
         };
@@ -222,9 +219,9 @@ public class NotificationServiceTests
         var (svc, repo) = Create();
         var data = new List<Notification>
         {
-            new() { Id = 1, UserId = 1, NotificationType = new NotificationType { Name = "A" }, CreatedAt = new DateTime(2026, 1, 1) },
-            new() { Id = 2, UserId = 1, NotificationType = new NotificationType { Name = "B" }, CreatedAt = new DateTime(2026, 3, 1) },
-            new() { Id = 3, UserId = 1, NotificationType = new NotificationType { Name = "C" }, CreatedAt = new DateTime(2026, 2, 1) },
+            new() { Id = 1, UserId = 1, NotificationType = new NotificationType { Name = "A" }, Comment = new Comment(), CreatedAt = new DateTime(2026, 1, 1) },
+            new() { Id = 2, UserId = 1, NotificationType = new NotificationType { Name = "B" }, Comment = new Comment(), CreatedAt = new DateTime(2026, 3, 1) },
+            new() { Id = 3, UserId = 1, NotificationType = new NotificationType { Name = "C" }, Comment = new Comment(), CreatedAt = new DateTime(2026, 2, 1) },
         };
         SetupQuery(repo, data);
 
