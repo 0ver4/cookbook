@@ -42,7 +42,8 @@
                         </p>
                     </a>
                     <form asp-action="Delete" asp-route-id="@col.Id" method="post"
-                          onsubmit="return confirm('Usunąć kolekcję @col.Name?')"
+                          data-name="@col.Name"
+                          onsubmit="return confirm('Usunąć kolekcję ' + this.dataset.name + '?')"
                           class="absolute right-3 top-3">
                         <button type="submit" class="rounded p-1 text-gray-300 hover:text-red-500" title="Usuń kolekcję">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
