@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CookBook.Controllers;
 
+// Zgłaszanie treści przez zwykłych użytkowników. Zarządzanie zgłoszeniami
+// odbywa się w panelu moderacji (Areas/Moderation, ReportsController).
 public class ReportController : Controller
 {
     private readonly IReportService _service;
@@ -18,8 +20,6 @@ public class ReportController : Controller
     }
 
     private int CurrentUserId => int.Parse(_userManager.GetUserId(User)!);
-
-    // --- Zgłaszanie (zalogowani użytkownicy) ---
 
     [HttpPost]
     [Authorize]
@@ -41,79 +41,10 @@ public class ReportController : Controller
         return RedirectToAction("Details", "Recipe", new { id = recipeId });
     }
 
-    // --- Panel moderacji ---
-
-    [Authorize(Roles = "Moderator")]
-    public async Task<IActionResult> Index(bool showResolved = false)
-    {
-        var vm = await _service.GetReportsAsync(showResolved);
-        return View(vm);
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "Moderator")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ResolveRecipe(int id, bool showResolved = false)
-    {
-        var (success, error) = await _service.SetRecipeReportStatusAsync(id, CurrentUserId, ReportStatus.Resolved);
-        SetFlash(success, error, "Oznaczono zgłoszenie jako rozpatrzone.");
-        return RedirectToAction(nameof(Index), new { showResolved });
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "Moderator")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DismissRecipe(int id, bool showResolved = false)
-    {
-        var (success, error) = await _service.SetRecipeReportStatusAsync(id, CurrentUserId, ReportStatus.Dismissed);
-        SetFlash(success, error, "Odrzucono zgłoszenie.");
-        return RedirectToAction(nameof(Index), new { showResolved });
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "Moderator")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteRecipe(int id, bool showResolved = false)
-    {
-        var (success, error) = await _service.DeleteReportedRecipeAsync(id, CurrentUserId);
-        SetFlash(success, error, "Usunięto zgłoszony przepis.");
-        return RedirectToAction(nameof(Index), new { showResolved });
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "Moderator")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ResolveComment(int id, bool showResolved = false)
-    {
-        var (success, error) = await _service.SetCommentReportStatusAsync(id, CurrentUserId, ReportStatus.Resolved);
-        SetFlash(success, error, "Oznaczono zgłoszenie jako rozpatrzone.");
-        return RedirectToAction(nameof(Index), new { showResolved });
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "Moderator")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DismissComment(int id, bool showResolved = false)
-    {
-        var (success, error) = await _service.SetCommentReportStatusAsync(id, CurrentUserId, ReportStatus.Dismissed);
-        SetFlash(success, error, "Odrzucono zgłoszenie.");
-        return RedirectToAction(nameof(Index), new { showResolved });
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "Moderator")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteComment(int id, bool showResolved = false)
-    {
-        var (success, error) = await _service.DeleteReportedCommentAsync(id, CurrentUserId);
-        SetFlash(success, error, "Usunięto zgłoszony komentarz.");
-        return RedirectToAction(nameof(Index), new { showResolved });
-    }
-
-    private void SetFlash(bool success, string? error, string successMessage = "Dziękujemy, zgłoszenie zostało wysłane.")
+    private void SetFlash(bool success, string? error)
     {
         if (success)
-            TempData["Success"] = successMessage;
+            TempData["Success"] = "Dziękujemy, zgłoszenie zostało wysłane.";
         else
             TempData["Error"] = error;
     }

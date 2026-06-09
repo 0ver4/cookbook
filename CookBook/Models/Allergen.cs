@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CookBook.Models;
 
-public class Allergen
+public class Allergen : INamedEntity
 {
     public int Id { get; set; }
     

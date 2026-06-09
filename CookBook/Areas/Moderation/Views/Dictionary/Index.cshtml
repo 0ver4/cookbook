@@ -1,0 +1,45 @@
+@model CookBook.Dtos.LookupListVm
+@{
+    var d = Model.Descriptor;
+    ViewData["Title"] = d.Plural;
+}
+
+<div class="mx-auto max-w-5xl px-4 py-6">
+    <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-lg font-bold text-gray-800">@d.Emoji @d.Plural</h2>
+        <a asp-action="Create" asp-route-slug="@d.Slug"
+           class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+            + Dodaj
+        </a>
+    </div>
+
+    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">#</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-600">Nazwa</th>
+                <th class="px-4 py-3 text-right font-semibold text-gray-600">Akcje</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+            @if (!Model.Items.Any())
+            {
+                <tr><td colspan="3" class="px-4 py-6 text-center text-gray-400">Brak pozycji.</td></tr>
+            }
+            @foreach (var item in Model.Items)
+            {
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-500">@item.Id</td>
+                    <td class="px-4 py-3 font-medium text-gray-800">@item.Name</td>
+                    <td class="px-4 py-3 text-right">
+                        <a asp-action="Edit" asp-route-slug="@d.Slug" asp-route-id="@item.Id" class="text-indigo-600 hover:underline">Edytuj</a>
+                        <span class="text-gray-300">|</span>
+                        <a asp-action="Delete" asp-route-slug="@d.Slug" asp-route-id="@item.Id" class="text-red-600 hover:underline">Usuń</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

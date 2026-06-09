@@ -32,10 +32,10 @@ builder.Services.AddDbContext<CookBookContext>(options =>
 // Generyczne repozytorium dla prostych encji słownikowych (Tag, Unit, DifficultyLevel...)
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-// Repozytoria i serwisy (wzorzec: jedna para na encję)
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
+// Generyczny serwis słownikowy ({Id, Name}) — obsługuje wszystkie słowniki z LookupRegistry
+builder.Services.AddScoped(typeof(LookupService<>));
 
+// Repozytoria i serwisy (wzorzec: jedna para na encję)
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
 builder.Services.AddScoped<IImageService, ImageService>();
@@ -83,6 +83,10 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",
