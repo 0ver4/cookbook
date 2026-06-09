@@ -38,11 +38,9 @@
                         <p class="mt-1 text-xs text-gray-400">@n.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
-                        @if (n.RecipeId.HasValue)
-                        {
-                            <a asp-controller="Recipe" asp-action="Details" asp-route-id="@n.RecipeId"
-                               class="text-xs text-indigo-600 hover:underline">Zobacz przepis</a>
-                        }
+                        <a asp-controller="Recipe" asp-action="Details" asp-route-id="@n.RecipeId"
+                           asp-fragment="comment-@n.CommentId"
+                           class="text-xs text-indigo-600 hover:underline">Zobacz komentarz</a>
                         @if (!n.IsRead)
                         {
                             <form asp-action="MarkAsRead" asp-route-id="@n.Id" method="post">

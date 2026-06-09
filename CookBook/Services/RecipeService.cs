@@ -377,14 +377,14 @@ public class RecipeService : IRecipeService
         {
             var parent = await _comments.Query().FirstOrDefaultAsync(c => c.Id == replyToId.Value);
             if (parent != null && parent.UserId != userId)
-                await _notifications.CreateAsync(parent.UserId, 2, userId, recipeId);
+                await _notifications.CreateAsync(parent.UserId, 2, userId, comment.Id);
         }
         else
         {
             // Nowy komentarz pod przepisem → właściciel przepisu
             var recipe = await _recipes.Query().FirstOrDefaultAsync(r => r.Id == recipeId);
             if (recipe != null && recipe.UserId != userId)
-                await _notifications.CreateAsync(recipe.UserId, 1, userId, recipeId);
+                await _notifications.CreateAsync(recipe.UserId, 1, userId, comment.Id);
         }
 
         return (true, null);
