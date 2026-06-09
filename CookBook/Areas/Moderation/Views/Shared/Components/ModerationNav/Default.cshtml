@@ -1,24 +1,29 @@
 @model CookBook.Areas.Moderation.ModerationNavVm
 @{
-    var current = ViewContext.RouteData.Values["controller"]?.ToString();
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var slug = ViewContext.RouteData.Values["slug"]?.ToString();
 
-    string Tab(string controller) => current == controller
+    string Cls(bool active) => active
         ? "border-indigo-600 text-indigo-700"
         : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700";
+
+    const string baseCls = "-mb-px flex items-center gap-1.5 border-b-2 px-1 pb-2.5 text-sm font-medium";
 }
 
-<nav class="mt-3 flex gap-6 border-b border-gray-200">
-    <a asp-area="Moderation" asp-controller="Reports" asp-action="Index"
-       class="@Tab("Reports") -mb-px flex items-center gap-1.5 border-b-2 px-1 pb-2.5 text-sm font-medium">
+<nav class="mt-3 flex flex-wrap gap-6 border-b border-gray-200">
+    <a asp-controller="Reports" asp-action="Index" class="@Cls(controller == "Reports") @baseCls">
         <span>🚩 Zgłoszenia</span>
         @if (Model.PendingReports > 0)
         {
             <span class="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">@Model.PendingReports</span>
         }
     </a>
-    <a asp-area="Moderation" asp-controller="Categories" asp-action="Index"
-       class="@Tab("Categories") -mb-px flex items-center gap-1.5 border-b-2 px-1 pb-2.5 text-sm font-medium">
-        <span>🏷️ Kategorie</span>
-        <span class="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-gray-100 px-1 text-xs font-medium text-gray-600">@Model.CategoryCount</span>
-    </a>
+    @foreach (var t in Model.Dictionaries)
+    {
+        <a asp-controller="Dictionary" asp-action="Index" asp-route-slug="@t.Slug"
+           class="@Cls(controller == "Dictionary" && slug == t.Slug) @baseCls">
+            <span>@t.Label</span>
+            <span class="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-gray-100 px-1 text-xs font-medium text-gray-600">@t.Count</span>
+        </a>
+    }
 </nav>
