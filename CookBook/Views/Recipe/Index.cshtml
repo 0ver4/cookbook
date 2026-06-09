@@ -127,15 +127,25 @@
                             </div>
                         }
 
-                        <div class="mt-2 text-sm text-amber-500">
+                        <div class="mt-2 flex items-center gap-1.5 text-sm">
                             @if (r.AverageRating.HasValue)
                             {
-                                <span>★ @r.AverageRating.Value.ToString("0.0")</span>
-                                <span class="text-gray-400">(@r.ReviewCount)</span>
+                                <span class="flex gap-0.5">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        string sc = r.AverageRating.Value >= i - 0.25 ? "text-amber-400" : (r.AverageRating.Value >= i - 0.75 ? "text-amber-300 opacity-60" : "text-gray-200");
+                                        <span class="@sc text-base leading-none">★</span>
+                                    }
+                                </span>
+                                <span class="font-semibold text-amber-600">@r.AverageRating.Value.ToString("0.0")</span>
+                                <span class="text-gray-400 text-xs">(@r.ReviewCount)</span>
                             }
                             else
                             {
-                                <span class="text-gray-300">brak ocen</span>
+                                <span class="flex gap-0.5">
+                                    @for (int i = 0; i < 5; i++) { <span class="text-gray-200 text-base leading-none">★</span> }
+                                </span>
+                                <span class="text-gray-400 text-xs">brak ocen</span>
                             }
                         </div>
                     </div>
