@@ -465,8 +465,5 @@ public class RecipeService : IRecipeService
         return null;
     }
 
-    private static string AuthorName(ApplicationUser user) =>
-        !string.IsNullOrWhiteSpace(user.FirstName)
-            ? $"{user.FirstName} {user.LastName}".Trim()
-            : (user.UserName ?? user.Email ?? "Użytkownik");
+    private static string AuthorName(ApplicationUser user) => user.PublicUsername;
 }
