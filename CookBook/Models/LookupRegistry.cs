@@ -22,6 +22,7 @@ public static class LookupRegistry
         new LookupDescriptor("units",             "jednostkę",        "Jednostki",         "📏", typeof(Unit)),
         new LookupDescriptor("difficulty-levels", "poziom trudności", "Poziomy trudności", "📊", typeof(DifficultyLevel)),
         new LookupDescriptor("allergens",         "alergen",          "Alergeny",          "⚠️", typeof(Allergen)),
+        new LookupDescriptor("nutrition-types",   "typ wartości odżywczej", "Wartości odżywcze", "🥗", typeof(NutritionType)),
     };
 
     public static LookupDescriptor? Find(string? slug) =>
