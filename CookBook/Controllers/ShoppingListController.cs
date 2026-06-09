@@ -51,7 +51,7 @@ public class ShoppingListController : Controller
             return NotFound();
 
         var recipes = await _recipeService.GetListAsync();
-        ViewBag.Recipes = recipes.Select(r => new LookupItem(r.Id, r.Name)).ToList();
+        ViewBag.Recipes = recipes.Recipes.Select(r => new LookupItem(r.Id, r.Name)).ToList();
 
         var units = await _units.GetAllAsync();
         ViewBag.Units = units.OrderBy(u => u.Id).Select(u => new LookupItem(u.Id, u.Name)).ToList();

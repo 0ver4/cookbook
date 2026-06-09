@@ -1,4 +1,13 @@
+using CookBook.ViewModels;
+
 namespace CookBook.Dtos;
+
+/// <summary>Parametry filtrowania/sortowania listy przepisów (przekazywane przez query string).</summary>
+public record RecipeQuery(
+    string? Search = null,
+    int? CategoryId = null,
+    int? DifficultyId = null,
+    string Sort = "newest");
 
 /// <summary>Skrócony przepis na liście/kartach.</summary>
 public record RecipeListItemDto(
@@ -8,7 +17,15 @@ public record RecipeListItemDto(
     string DifficultyName,
     string AuthorName,
     double? AverageRating,
-    int ReviewCount);
+    int ReviewCount,
+    IReadOnlyList<string> Categories);
+
+/// <summary>Dane potrzebne do wyrenderowania listy z filtrami.</summary>
+public record RecipeListViewModel(
+    IReadOnlyList<RecipeListItemDto> Recipes,
+    IReadOnlyList<LookupItem> Categories,
+    IReadOnlyList<LookupItem> Difficulties,
+    RecipeQuery Query);
 
 /// <summary>Pojedyncza pozycja składnika w widoku szczegółów.</summary>
 public record RecipeIngredientLine(string IngredientName, double Amount, string UnitName);

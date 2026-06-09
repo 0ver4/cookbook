@@ -26,7 +26,7 @@ public class MealPlanService : IMealPlanService
         var vm = new MealPlanWeekViewModel
         {
             WeekStart = weekStart,
-            Recipes = recipes.Select(r => new LookupItem(r.Id, r.Name)).ToList()
+            Recipes = recipes.Recipes.Select(r => new LookupItem(r.Id, r.Name)).ToList()
         };
 
         for (var i = 0; i < 7; i++)
