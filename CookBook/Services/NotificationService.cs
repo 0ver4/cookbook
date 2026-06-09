@@ -34,19 +34,11 @@ public class NotificationService(IRepository<Notification> repo) : INotification
         return entities.Select(n => new NotificationDto(
             n.Id,
             n.NotificationType.Name,
-            n.TriggeredByUser != null ? AuthorName(n.TriggeredByUser) : null,
+            n.TriggeredByUser?.PublicUsername,
             n.Recipe?.Name,
             n.RecipeId,
             n.IsRead,
             n.CreatedAt)).ToList();
-    }
-
-    private static string AuthorName(ApplicationUser user)
-    {
-        var fullName = $"{user.FirstName} {user.LastName}".Trim();
-        return !string.IsNullOrWhiteSpace(fullName)
-            ? fullName
-            : (user.UserName ?? user.Email ?? "Użytkownik");
     }
 
     public async Task<int> GetUnreadCountAsync(int userId)
