@@ -474,6 +474,40 @@ public class RecipeService : IRecipeService
 
         return null;
     }
+    
+    public async Task<(bool Success, string? Error)> AddReviewAsync(int recipeId, int userId, int rating)
+    {
+        // 1. Walidacja oceny
+        if (rating < 1 || rating > 5)
+            return (false, "Ocena musi być w przedziale od 1 do 5.");
+
+        // 2. Sprawdzenie, czy użytkownik już ocenił ten przepis
+        // Upewnij się, że używasz odpowiedniej nazwy dla DbContext (np. _db lub _context)
+        var existingReview = await _db.Reviews
+            .FirstOrDefaultAsync(r => r.RecipeId == recipeId && r.UserId == userId);
+
+        if (existingReview != null)
+        {
+            // Aktualizacja istniejącej oceny
+            existingReview.Rating = rating;
+            existingReview.CreatedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            // Dodanie nowej oceny
+            var newReview = new Review
+            {
+                RecipeId = recipeId,
+                UserId = userId,
+                Rating = rating,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _db.Reviews.AddAsync(newReview);
+        }
+
+        await _db.SaveChangesAsync();
+        return (true, null);
+    }
 
     private static string AuthorName(ApplicationUser user) => user.PublicUsername;
 }
