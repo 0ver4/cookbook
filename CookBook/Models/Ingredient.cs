@@ -13,7 +13,10 @@ public class Ingredient
     public Unit Unit { get; set; } = null!;
     
     public double? DensityGramsPerMl { get; set; }
-    
+
+    /// <summary>Przybliżona waga jednej sztuki w gramach (do przeliczeń jednostki "sztuka").</summary>
+    public double? GramsPerPiece { get; set; }
+
     public ICollection<IngredientAllergen> IngredientAllergens { get; set; } = new List<IngredientAllergen>();
     public ICollection<IngredientNutrition> IngredientNutritions { get; set; } = new List<IngredientNutrition>();
 

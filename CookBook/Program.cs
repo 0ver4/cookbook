@@ -42,6 +42,11 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
+// Wartości odżywcze składników z zewnętrznego LLM (Mistral), za wymiennym INutritionProvider
+builder.Services.Configure<MistralOptions>(builder.Configuration.GetSection("Mistral"));
+builder.Services.AddHttpClient<INutritionProvider, MistralNutritionProvider>();
+builder.Services.AddScoped<INutritionService, NutritionService>();
+
 builder.Services.AddScoped<IShoppingListRepository, ShoppingListRepository>();
 builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
 builder.Services.AddScoped<IShoppingListPdfService, ShoppingListPdfService>();

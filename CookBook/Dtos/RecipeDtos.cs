@@ -33,6 +33,13 @@ public record RecipeIngredientLine(string IngredientName, double Amount, string 
 /// <summary>Pojedynczy krok w widoku szczegółów.</summary>
 public record RecipeStepLine(int Order, string Content);
 
+/// <summary>
+/// Zsumowane wartości odżywcze całego przepisu (kalorie w kcal, reszta w gramach).
+/// Wyliczane tylko, gdy WSZYSTKIE składniki da się przeliczyć na gramy i mają dane odżywcze.
+/// </summary>
+public record RecipeNutritionSummary(
+    double Calories, double Protein, double Fat, double Carbs, double Fiber, double Sugar, int? Servings);
+
 public record CommentReactionDto(int ReactionId, string ReactionName, string ReactionImageUrl, int Count, bool UserReacted);
 
 public record CommentDto(
@@ -64,4 +71,5 @@ public record RecipeDetailsDto(
     IReadOnlyList<RecipeStepLine> Steps,
     IReadOnlyList<string> Categories,
     IReadOnlyList<string> Tags,
-    IReadOnlyList<CommentDto> Comments);
+    IReadOnlyList<CommentDto> Comments,
+    RecipeNutritionSummary? Nutrition);
