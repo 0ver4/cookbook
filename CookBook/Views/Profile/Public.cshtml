@@ -1,0 +1,100 @@
+@model CookBook.ViewModels.PublicProfileViewModel
+@{
+    ViewData["Title"] = Model.DisplayName;
+}
+
+<div class="mx-auto max-w-4xl px-4 py-8">
+
+    @* Nagłówek profilu *@
+    <div class="mb-8 flex items-center gap-5">
+        <div class="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-purple-300 text-3xl font-bold text-white">
+            @Model.DisplayName[0].ToString().ToUpper()
+        </div>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">@Model.DisplayName</h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Kucharz od @Model.User.AccountCreated.ToLocalTime().ToString("MMMM yyyy", new System.Globalization.CultureInfo("pl-PL"))
+            </p>
+            <div class="mt-2 flex gap-4 text-sm text-gray-600">
+                <span><span class="font-semibold text-gray-800">@Model.Recipes.Count</span> przepisów</span>
+                <span><span class="font-semibold text-gray-800">@Model.Reviews.Count</span> ocen</span>
+            </div>
+        </div>
+    </div>
+
+    @* Przepisy *@
+    <section class="mb-10">
+        <h2 class="mb-4 text-xl font-bold text-gray-800">Przepisy (@Model.Recipes.Count)</h2>
+        @if (!Model.Recipes.Any())
+        {
+            <p class="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-400">
+                Ten użytkownik nie opublikował jeszcze żadnych przepisów.
+            </p>
+        }
+        else
+        {
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach (var r in Model.Recipes)
+                {
+                    var firstImageId = r.Images.OrderBy(i => i.Order).Select(i => (int?)i.ImageId).FirstOrDefault();
+                    <a asp-controller="Recipe" asp-action="Details" asp-route-id="@r.Id"
+                       class="group block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:border-indigo-300 hover:shadow-md">
+                        <div class="h-36 w-full bg-gray-100">
+                            @if (firstImageId.HasValue)
+                            {
+                                <img src="/Image/@firstImageId" alt="@r.Name" class="h-full w-full object-cover" />
+                            }
+                            else
+                            {
+                                <div class="flex h-full items-center justify-center text-4xl text-gray-300">🍽️</div>
+                            }
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-semibold text-gray-800 group-hover:text-indigo-600 leading-snug">@r.Name</h3>
+                            <p class="mt-0.5 text-xs text-gray-400">
+                                @r.DifficultyLevel.Name · @r.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                            </p>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    </section>
+
+    @* Recenzje *@
+    <section>
+        <h2 class="mb-4 text-xl font-bold text-gray-800">Oceny przepisów (@Model.Reviews.Count)</h2>
+        @if (!Model.Reviews.Any())
+        {
+            <p class="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-400">
+                Ten użytkownik nie wystawił jeszcze żadnych ocen.
+            </p>
+        }
+        else
+        {
+            <div class="space-y-3">
+                @foreach (var rev in Model.Reviews)
+                {
+                    <a asp-controller="Recipe" asp-action="Details" asp-route-id="@rev.RecipeId"
+                       class="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
+                        <div>
+                            <span class="font-medium text-gray-800">@rev.Recipe.Name</span>
+                            <span class="ml-2 text-xs text-gray-400">@rev.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <span class="@(i <= rev.Rating ? "text-amber-400" : "text-gray-200") text-lg leading-none">★</span>
+                            }
+                            <span class="ml-1 text-sm font-semibold text-amber-600">@rev.Rating</span>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    </section>
+
+    <div class="mt-8">
+        <a asp-controller="Recipe" asp-action="Index" class="text-sm text-indigo-600 hover:underline">← Wróć do przepisów</a>
+    </div>
+</div>
