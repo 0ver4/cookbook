@@ -14,15 +14,18 @@ public class RecipeController : Controller
 {
     private readonly IRecipeService _service;
     private readonly IShoppingListService _shoppingListService;
+    private readonly ICollectionService _collectionService;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public RecipeController(
         IRecipeService service,
         IShoppingListService shoppingListService,
+        ICollectionService collectionService,
         UserManager<ApplicationUser> userManager)
     {
         _service = service;
         _shoppingListService = shoppingListService;
+        _collectionService = collectionService;
         _userManager = userManager;
     }
 
@@ -50,6 +53,9 @@ public class RecipeController : Controller
         {
             var lists = await _shoppingListService.GetForUserAsync(CurrentUserId);
             ViewBag.ShoppingLists = lists.Select(l => new LookupItem(l.Id, l.Name)).ToList();
+
+            var collections = await _collectionService.GetForUserAsync(CurrentUserId);
+            ViewBag.Collections = collections.Select(c => new LookupItem(c.Id, c.Name)).ToList();
         }
 
         return View(recipe);

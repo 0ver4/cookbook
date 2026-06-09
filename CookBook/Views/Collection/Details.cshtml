@@ -1,0 +1,99 @@
+@model CookBook.Dtos.CollectionDetailsDto
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="mx-auto max-w-4xl px-4 py-6">
+    <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">@Model.Name</h1>
+            <p class="mt-1 text-sm text-gray-400">
+                @Model.Recipes.Count @(Model.Recipes.Count == 1 ? "przepis" : Model.Recipes.Count is >= 2 and <= 4 ? "przepisy" : "przepisów")
+                · utworzono @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+            </p>
+        </div>
+
+        <div class="flex gap-2">
+            @* Zmień nazwę *@
+            <button type="button" onclick="document.getElementById('rename-form').classList.toggle('hidden')"
+                    class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
+                ✏️ Zmień nazwę
+            </button>
+            @* Usuń kolekcję *@
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Usunąć kolekcję „@Model.Name"?')">
+                <button type="submit" class="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">
+                    🗑️ Usuń kolekcję
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @* Formularz zmiany nazwy *@
+    <div id="rename-form" class="mb-6 hidden rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+        <form asp-action="Rename" method="post" class="flex gap-2">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <input type="text" name="name" value="@Model.Name" maxlength="100" required
+                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Zapisz</button>
+            <button type="button" onclick="document.getElementById('rename-form').classList.add('hidden')"
+                    class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">Anuluj</button>
+        </form>
+    </div>
+
+    @if (!Model.Recipes.Any())
+    {
+        <div class="rounded-xl border border-dashed border-gray-300 p-12 text-center">
+            <p class="text-4xl mb-3">🍽️</p>
+            <p class="text-gray-500">Ta kolekcja jest pusta.</p>
+            <p class="mt-1 text-sm text-gray-400">Otwórz dowolny przepis i dodaj go do tej kolekcji.</p>
+            <a asp-controller="Recipe" asp-action="Index" class="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+                Przeglądaj przepisy
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (var r in Model.Recipes)
+            {
+                <div class="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:border-indigo-300 hover:shadow-md">
+                    <a asp-controller="Recipe" asp-action="Details" asp-route-id="@r.RecipeId" class="block">
+                        <div class="h-36 w-full bg-gray-100">
+                            @if (!string.IsNullOrEmpty(r.ImageUrl))
+                            {
+                                <img src="@r.ImageUrl" alt="@r.Name" class="h-full w-full object-cover" />
+                            }
+                            else
+                            {
+                                <div class="flex h-full items-center justify-center text-4xl text-gray-300">🍽️</div>
+                            }
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-semibold text-gray-800 group-hover:text-indigo-600 leading-snug">@r.Name</h3>
+                            <p class="mt-0.5 text-xs text-gray-400">@r.DifficultyName</p>
+                        </div>
+                    </a>
+                    @* Przycisk usunięcia z kolekcji *@
+                    <form asp-action="RemoveRecipe" method="post" class="absolute right-2 top-2">
+                        <input type="hidden" name="collectionId" value="@Model.Id" />
+                        <input type="hidden" name="recipeId" value="@r.RecipeId" />
+                        <input type="hidden" name="returnTo" value="collection" />
+                        <button type="submit"
+                                class="rounded-full bg-white/80 p-1.5 text-gray-400 shadow hover:text-red-500 backdrop-blur-sm"
+                                title="Usuń z kolekcji"
+                                onclick="return confirm('Usunąć „@r.Name" z kolekcji?')">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="mt-8">
+        <a asp-action="Index" class="text-sm text-indigo-600 hover:underline">← Wróć do kolekcji</a>
+    </div>
+</div>
