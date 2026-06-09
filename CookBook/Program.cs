@@ -1,8 +1,10 @@
+using System.Globalization;
 using CookBook.Data;
 using CookBook.Models;
 using CookBook.Repositories;
 using CookBook.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
 
@@ -13,6 +15,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// InvariantCulture — model binder zawsze parsuje liczby z kropką (0.5),
+// niezależnie od ustawień systemowych (ważne dla pól Amount w przepisach)
+builder.Services.Configure<RequestLocalizationOptions>(opts =>
+{
+    var invariant = new[] { CultureInfo.InvariantCulture };
+    opts.DefaultRequestCulture = new RequestCulture(CultureInfo.InvariantCulture);
+    opts.SupportedCultures = invariant;
+    opts.SupportedUICultures = invariant;
+});
 
 builder.Services.AddDbContext<CookBookContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("CookBookDb")));
@@ -65,6 +77,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseRequestLocalization();
 app.UseRouting();
 
 app.UseAuthentication();

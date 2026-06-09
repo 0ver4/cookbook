@@ -5,7 +5,7 @@ using CookBook.Models;
 
 namespace CookBook.Controllers;
 
-[Authorize] // tylko zalogowani maja dostep
+[Authorize] // tylko zalogowani 
 public class ProfileController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;
@@ -17,14 +17,12 @@ public class ProfileController : Controller
 
     public async Task<IActionResult> Index()
     {
-        // dane zalogowanego
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
             return NotFound("Nie znaleziono użytkownika.");
         }
-
-        // rola uzytkownika
+        
         var roles = await _userManager.GetRolesAsync(user);
         ViewBag.UserRole = roles.FirstOrDefault() ?? "Brak roli";
 
@@ -57,8 +55,7 @@ public class ProfileController : Controller
 
         user.FirstName = firstName;
         user.LastName = lastName;
-
-        // aktualizacja uzytkownika
+        
         var result = await _userManager.UpdateAsync(user);
         if (result.Succeeded)
         {
