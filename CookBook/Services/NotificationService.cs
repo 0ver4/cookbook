@@ -6,14 +6,13 @@ namespace CookBook.Services;
 
 public class NotificationService(IRepository<Notification> repo) : INotificationService
 {
-    public async Task CreateAsync(int userId, int typeId, int? triggeredByUserId = null, int? recipeId = null, int? commentId = null)
+    public async Task CreateAsync(int userId, int typeId, int? triggeredByUserId, int commentId)
     {
         await repo.AddAsync(new Notification
         {
             UserId = userId,
             NotificationTypeId = typeId,
             TriggeredByUserId = triggeredByUserId,
-            RecipeId = recipeId,
             CommentId = commentId
         });
         await repo.SaveChangesAsync();
@@ -27,7 +26,7 @@ public class NotificationService(IRepository<Notification> repo) : INotification
             .Where(n => n.UserId == userId)
             .Include(n => n.NotificationType)
             .Include(n => n.TriggeredByUser)
-            .Include(n => n.Recipe)
+            .Include(n => n.Comment).ThenInclude(c => c.Recipe)
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync();
 
@@ -35,8 +34,9 @@ public class NotificationService(IRepository<Notification> repo) : INotification
             n.Id,
             n.NotificationType.Name,
             n.TriggeredByUser?.PublicUsername,
-            n.Recipe?.Name,
-            n.RecipeId,
+            n.Comment.Recipe?.Name,
+            n.Comment.RecipeId,
+            n.CommentId,
             n.IsRead,
             n.CreatedAt)).ToList();
     }

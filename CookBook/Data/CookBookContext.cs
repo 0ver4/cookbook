@@ -170,7 +170,7 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
             .HasForeignKey(rc => rc.CollectionId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<RecipeToCollection>()
             .HasOne(rc => rc.Recipe).WithMany()
-            .HasForeignKey(rc => rc.RecipeId).OnDelete(DeleteBehavior.Restrict);
+            .HasForeignKey(rc => rc.RecipeId).OnDelete(DeleteBehavior.Cascade);
 
         // --- Shopping lists ---
         modelBuilder.Entity<ShoppingList>()
@@ -192,7 +192,7 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
             .HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<MealPlanItem>()
             .HasOne(m => m.Recipe).WithMany()
-            .HasForeignKey(m => m.RecipeId).OnDelete(DeleteBehavior.Restrict);
+            .HasForeignKey(m => m.RecipeId).OnDelete(DeleteBehavior.Cascade);
 
         // --- Reports ---
         modelBuilder.Entity<RecipeReport>()
@@ -215,7 +215,7 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
             .HasOne(r => r.ResolvedBy).WithMany()
             .HasForeignKey(r => r.ResolvedById).OnDelete(DeleteBehavior.Restrict);
 
-        // --- Notifications (all FKs Restrict; cleaned up in app logic) ---
+        // --- Notifications (zawsze celują w komentarz; kaskada z komentarza/przepisu) ---
         modelBuilder.Entity<Notification>()
             .HasOne(n => n.User).WithMany()
             .HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.Restrict);
@@ -226,15 +226,8 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
             .HasOne(n => n.TriggeredByUser).WithMany()
             .HasForeignKey(n => n.TriggeredByUserId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Notification>()
-            .HasOne(n => n.Recipe).WithMany()
-            .HasForeignKey(n => n.RecipeId).OnDelete(DeleteBehavior.Restrict);
-        modelBuilder.Entity<Notification>()
             .HasOne(n => n.Comment).WithMany()
-            .HasForeignKey(n => n.CommentId).OnDelete(DeleteBehavior.Restrict);
-        modelBuilder.Entity<Notification>()
-            .ToTable(t => t.HasCheckConstraint(
-                "chk_notification_one_target",
-                "(CASE WHEN [RecipeId] IS NOT NULL THEN 1 ELSE 0 END + CASE WHEN [CommentId] IS NOT NULL THEN 1 ELSE 0 END) <= 1"));
+            .HasForeignKey(n => n.CommentId).OnDelete(DeleteBehavior.Cascade);
 
         // --- Seed data ---
         modelBuilder.Entity<DifficultyLevel>().HasData(

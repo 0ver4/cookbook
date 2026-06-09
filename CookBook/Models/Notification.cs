@@ -13,11 +13,8 @@ public class Notification
     public int? TriggeredByUserId { get; set; }
     public ApplicationUser? TriggeredByUser { get; set; }
 
-    public int? RecipeId { get; set; }
-    public Recipe? Recipe { get; set; }
-
-    public int? CommentId { get; set; }
-    public Comment? Comment { get; set; }
+    public int CommentId { get; set; }
+    public Comment Comment { get; set; } = null!;
 
     public bool IsRead { get; set; }
 
