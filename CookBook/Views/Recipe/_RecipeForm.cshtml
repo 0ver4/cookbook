@@ -63,7 +63,7 @@
             {
                 <div class="ingredient-row grid grid-cols-12 gap-2">
                     <input name="Ingredients[@i].IngredientName" value="@Model.Ingredients[i].IngredientName" list="ingredient-suggestions" placeholder="np. Mąka pszenna" class="col-span-6 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
-                    <input name="Ingredients[@i].Amount" type="number" step="any" min="0" value="@Model.Ingredients[i].Amount" placeholder="Ilość" class="col-span-3 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+                    <input name="Ingredients[@i].Amount" type="number" step="0.01" min="0.01" value="@Model.Ingredients[i].Amount" placeholder="Ilość" class="col-span-3 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
                     <select name="Ingredients[@i].UnitId" class="col-span-2 rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
                         <option value="">dom.</option>
                         @foreach (var u in Model.AllUnits)
@@ -167,7 +167,7 @@
 <template id="ingredient-template">
     <div class="ingredient-row grid grid-cols-12 gap-2">
         <input name="__I__.IngredientName" list="ingredient-suggestions" placeholder="np. Mąka pszenna" class="col-span-6 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
-        <input name="__I__.Amount" type="number" step="any" min="0" placeholder="Ilość" class="col-span-3 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+        <input name="__I__.Amount" type="number" step="0.01" min="0.01" placeholder="Ilość" class="col-span-3 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
         <select name="__I__.UnitId" class="col-span-2 rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
             <option value="">dom.</option>
             @foreach (var u in Model.AllUnits)
