@@ -32,6 +32,9 @@ builder.Services.AddDbContext<CookBookContext>(options =>
 // Generyczne repozytorium dla prostych encji słownikowych (Tag, Unit, DifficultyLevel...)
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
+// Repozytorium słownikowe z dodatkowym sprawdzaniem unikalności nazwy
+builder.Services.AddScoped(typeof(ILookupRepository<>), typeof(LookupRepository<>));
+
 // Generyczny serwis słownikowy ({Id, Name}) — obsługuje wszystkie słowniki z LookupRegistry
 builder.Services.AddScoped(typeof(LookupService<>));
 

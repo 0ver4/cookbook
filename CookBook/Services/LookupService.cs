@@ -22,9 +22,9 @@ public interface ILookupOps
 public class LookupService<T> : ILookupOps where T : class, INamedEntity, new()
 {
     private const int MaxNameLength = 50;
-    private readonly IRepository<T> _repo;
+    private readonly ILookupRepository<T> _repo;
 
-    public LookupService(IRepository<T> repo) => _repo = repo;
+    public LookupService(ILookupRepository<T> repo) => _repo = repo;
 
     public async Task<IReadOnlyList<(int, string)>> GetAllAsync() =>
         (await _repo.GetAllAsync())
@@ -41,7 +41,7 @@ public class LookupService<T> : ILookupOps where T : class, INamedEntity, new()
     {
         var (norm, error) = Normalize(name);
         if (error is not null) return (false, error);
-        if (await ExistsByNameAsync(norm!)) return (false, "Taka nazwa już istnieje.");
+        if (await _repo.ExistsByNameAsync(norm!)) return (false, "Taka nazwa już istnieje.");
 
         await _repo.AddAsync(new T { Name = norm! });
         await _repo.SaveChangesAsync();
@@ -55,7 +55,7 @@ public class LookupService<T> : ILookupOps where T : class, INamedEntity, new()
 
         var (norm, error) = Normalize(name);
         if (error is not null) return (false, error);
-        if (await ExistsByNameAsync(norm!, excludeId: id)) return (false, "Taka nazwa już istnieje.");
+        if (await _repo.ExistsByNameAsync(norm!, excludeId: id)) return (false, "Taka nazwa już istnieje.");
 
         entity.Name = norm!;
         _repo.Update(entity);
@@ -71,14 +71,6 @@ public class LookupService<T> : ILookupOps where T : class, INamedEntity, new()
             await _repo.SaveChangesAsync();
         }
     }
-
-    // EF.Property pozwala odwołać się do kolumny po nazwie — tłumaczy się zawsze na WHERE Name = @p,
-    // bez problemu z dostępem do składowej przez interfejs. excludeId = 0 (Id z identity nigdy nie jest 0)
-    // oznacza "nic nie wykluczaj" przy tworzeniu.
-    private Task<bool> ExistsByNameAsync(string name, int excludeId = 0) =>
-        _repo.Query().AnyAsync(x =>
-            EF.Property<int>(x, "Id") != excludeId &&
-            EF.Property<string>(x, "Name") == name);
 
     private static (string?, string?) Normalize(string name)
     {
