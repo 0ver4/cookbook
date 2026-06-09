@@ -121,6 +121,32 @@
                 }
             </ul>
 
+            @if (Model.Nutrition is not null)
+            {
+                var n = Model.Nutrition;
+                <div class="mt-4 rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+                    <h3 class="mb-2 text-sm font-semibold text-gray-700">Wartości odżywcze (cały przepis)</h3>
+                    <ul class="space-y-1 text-sm text-gray-700">
+                        <li class="flex justify-between"><span>Kalorie</span><span class="font-medium">@n.Calories.ToString("0") kcal</span></li>
+                        <li class="flex justify-between"><span>Białko</span><span>@n.Protein.ToString("0.#") g</span></li>
+                        <li class="flex justify-between"><span>Tłuszcze</span><span>@n.Fat.ToString("0.#") g</span></li>
+                        <li class="flex justify-between"><span>Węglowodany</span><span>@n.Carbs.ToString("0.#") g</span></li>
+                        <li class="flex justify-between pl-3 text-gray-500"><span>w tym cukry</span><span>@n.Sugar.ToString("0.#") g</span></li>
+                        <li class="flex justify-between"><span>Błonnik</span><span>@n.Fiber.ToString("0.#") g</span></li>
+                    </ul>
+                    @if (n.Servings is > 0)
+                    {
+                        <p class="mt-2 border-t border-emerald-100 pt-2 text-xs text-gray-500">
+                            Na porcję (z @n.Servings): @((n.Calories / n.Servings.Value).ToString("0")) kcal ·
+                            B @((n.Protein / n.Servings.Value).ToString("0.#")) g ·
+                            T @((n.Fat / n.Servings.Value).ToString("0.#")) g ·
+                            W @((n.Carbs / n.Servings.Value).ToString("0.#")) g
+                        </p>
+                    }
+                    <p class="mt-1 text-[11px] text-gray-400">Wartości szacunkowe (AI), na podstawie składników.</p>
+                </div>
+            }
+
             @if (User.Identity?.IsAuthenticated == true)
             {
                 <form asp-controller="ShoppingList" asp-action="AddRecipe" method="post" class="mt-4 space-y-2 rounded-lg border border-indigo-100 bg-indigo-50 p-3">

@@ -20,6 +20,7 @@ public class RecipeService : IRecipeService
     private readonly IRepository<Comment> _comments;
     private readonly IRepository<CommentReaction> _commentReactions;
     private readonly INotificationService _notifications;
+    private readonly INutritionService _nutrition;
     private readonly CookBookContext _db;
 
     public RecipeService(
@@ -34,6 +35,7 @@ public class RecipeService : IRecipeService
         IRepository<Comment> comments,
         IRepository<CommentReaction> commentReactions,
         INotificationService notifications,
+        INutritionService nutrition,
         CookBookContext db)
     {
         _recipes = recipes;
@@ -47,6 +49,7 @@ public class RecipeService : IRecipeService
         _comments = comments;
         _commentReactions = commentReactions;
         _notifications = notifications;
+        _nutrition = nutrition;
         _db = db;
     }
 
@@ -118,8 +121,69 @@ public class RecipeService : IRecipeService
             steps,
             r.Categories.Select(c => c.Category.Name).ToList(),
             r.Tags.Select(t => t.Tag.Name).ToList(),
-            commentsDto
+            commentsDto,
+            ComputeNutrition(r)
         );
+    }
+
+    // Stałe id z seedu NutritionType (Data/CookBookContext.cs).
+    private const int NutCalories = 1, NutProtein = 2, NutFat = 3, NutCarbs = 4, NutFiber = 5, NutSugar = 6;
+
+    /// <summary>
+    /// Sumuje wartości odżywcze całego przepisu. Zwraca null (suma ukryta), gdy choć jeden
+    /// składnik nie da się przeliczyć na gramy albo nie ma kompletu wartości odżywczych.
+    /// </summary>
+    private static RecipeNutritionSummary? ComputeNutrition(Recipe r)
+    {
+        if (r.Ingredients.Count == 0)
+            return null;
+
+        double cal = 0, pro = 0, fat = 0, carb = 0, fib = 0, sug = 0;
+
+        foreach (var ri in r.Ingredients)
+        {
+            var grams = ToGrams(ri);
+            if (grams is null)
+                return null;
+
+            var nut = ri.Ingredient.IngredientNutritions;
+            double? Per(int typeId) => nut.FirstOrDefault(n => n.NutritionTypeId == typeId)?.AmountPer100g;
+
+            var c = Per(NutCalories); var p = Per(NutProtein); var f = Per(NutFat);
+            var cb = Per(NutCarbs); var fi = Per(NutFiber); var su = Per(NutSugar);
+            if (c is null || p is null || f is null || cb is null || fi is null || su is null)
+                return null;
+
+            var factor = grams.Value / 100.0;
+            cal += c.Value * factor; pro += p.Value * factor; fat += f.Value * factor;
+            carb += cb.Value * factor; fib += fi.Value * factor; sug += su.Value * factor;
+        }
+
+        return new RecipeNutritionSummary(
+            Math.Round(cal), Math.Round(pro, 1), Math.Round(fat, 1),
+            Math.Round(carb, 1), Math.Round(fib, 1), Math.Round(sug, 1), r.Servings);
+    }
+
+    /// <summary>Przelicza ilość składnika na gramy. null = brak przelicznika (nie da się policzyć).</summary>
+    private static double? ToGrams(RecipeIngredient ri)
+    {
+        var unitName = (ri.Unit ?? ri.Ingredient.Unit).Name.Trim().ToLowerInvariant();
+        var amount = ri.Amount;
+        var density = ri.Ingredient.DensityGramsPerMl;
+        var perPiece = ri.Ingredient.GramsPerPiece;
+
+        double? Volume(double mlPerUnit) => density is > 0 ? amount * mlPerUnit * density.Value : null;
+
+        return unitName switch
+        {
+            "gram" => amount,
+            "mililitr" => Volume(1),
+            "szklanka" => Volume(250),
+            "łyżka" => Volume(15),
+            "łyżeczka" => Volume(5),
+            "sztuka" => perPiece is > 0 ? amount * perPiece.Value : null,
+            _ => null
+        };
     }
 
     private CommentDto MapCommentWithReplies(Comment comment, ICollection<Comment> allComments)
@@ -407,6 +471,8 @@ public class RecipeService : IRecipeService
             .Where(i => !string.IsNullOrWhiteSpace(i.IngredientName))
             .GroupBy(i => i.IngredientName!.Trim(), StringComparer.OrdinalIgnoreCase);
 
+        var newIngredients = new List<Ingredient>();
+
         foreach (var group in groups)
         {
             var name = group.Key.Trim();
@@ -417,12 +483,23 @@ public class RecipeService : IRecipeService
 
             var line = new RecipeIngredient { Amount = amount, UnitId = unitId };
             if (existing is not null)
+            {
                 line.IngredientId = existing.Id;
+            }
             else
-                line.Ingredient = new Ingredient { Name = name, UnitId = unitId ?? defaultUnitId };
+            {
+                var newIngredient = new Ingredient { Name = name, UnitId = unitId ?? defaultUnitId };
+                line.Ingredient = newIngredient;
+                newIngredients.Add(newIngredient);
+            }
 
             recipe.Ingredients.Add(line);
         }
+
+        // Dla nowych składników dociągamy wartości odżywcze (równolegle, graceful — nie wywala zapisu).
+        // Wartości zapisują się wraz z grafem przepisu w jednym SaveChanges.
+        if (newIngredients.Count > 0)
+            await Task.WhenAll(newIngredients.Select(i => _nutrition.PopulateNutritionAsync(i)));
     }
 
     private async Task<int> GetDefaultUnitIdAsync()

@@ -57,6 +57,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
             .Include(r => r.Images)
             .Include(r => r.Steps.OrderBy(s => s.Order))
             .Include(r => r.Ingredients).ThenInclude(i => i.Ingredient).ThenInclude(ing => ing.Unit)
+            .Include(r => r.Ingredients).ThenInclude(i => i.Ingredient).ThenInclude(ing => ing.IngredientNutritions)
             .Include(r => r.Ingredients).ThenInclude(i => i.Unit)
             .Include(r => r.Categories).ThenInclude(c => c.Category)
             .Include(r => r.Tags).ThenInclude(t => t.Tag)
