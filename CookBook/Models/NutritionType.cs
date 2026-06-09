@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CookBook.Models;
 
-public class NutritionType
+public class NutritionType : INamedEntity
 {
     public int Id { get; set; }
     
