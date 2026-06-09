@@ -53,18 +53,28 @@ public class RecipeService : IRecipeService
     // Adres przez który serwujemy zdjęcie z bazy (ImageController)
     private static string ImageUrl(int imageId) => $"/Image/{imageId}";
 
-    public async Task<IReadOnlyList<RecipeListItemDto>> GetListAsync()
+    public async Task<RecipeListViewModel> GetListAsync(RecipeQuery? query = null)
     {
-        var recipes = await _recipes.GetListAsync();
-        return recipes.Select(r => new RecipeListItemDto(
+        query ??= new RecipeQuery();
+        var recipes = await _recipes.GetListAsync(query);
+
+        var items = recipes.Select(r => new RecipeListItemDto(
             r.Id,
             r.Name,
             r.Images.OrderBy(i => i.Order).Select(i => (int?)i.ImageId).FirstOrDefault() is int firstId ? ImageUrl(firstId) : null,
             r.DifficultyLevel.Name,
             AuthorName(r.User),
             r.Reviews.Count > 0 ? r.Reviews.Average(x => x.Rating) : null,
-            r.Reviews.Count
+            r.Reviews.Count,
+            r.Categories.Select(c => c.Category.Name).ToList()
         )).ToList();
+
+        var categories = (await _categories.GetAllAsync())
+            .OrderBy(c => c.Name).Select(c => new LookupItem(c.Id, c.Name)).ToList();
+        var difficulties = (await _difficultyLevels.GetAllAsync())
+            .OrderBy(d => d.Id).Select(d => new LookupItem(d.Id, d.Name)).ToList();
+
+        return new RecipeListViewModel(items, categories, difficulties, query);
     }
 
     public async Task<RecipeDetailsDto?> GetDetailsAsync(int id)

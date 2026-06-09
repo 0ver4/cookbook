@@ -1,4 +1,4 @@
-@model IReadOnlyList<CookBook.Dtos.RecipeListItemDto>
+@model CookBook.Dtos.RecipeListViewModel
 @{
     ViewData["Title"] = "Przepisy";
 }
@@ -6,25 +6,103 @@
 <partial name="_PageHeader" model="@("Przepisy")" />
 
 <div class="mx-auto max-w-5xl px-4">
-    @if (User.Identity?.IsAuthenticated == true)
-    {
-        <div class="mb-4 flex justify-end">
-            <a asp-action="Create" class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">+ Dodaj przepis</a>
-        </div>
-    }
 
-    @if (!Model.Any())
+    <!-- Pasek wyszukiwania i filtrów -->
+    <form method="get" class="mb-6 space-y-3">
+        <div class="flex gap-2">
+            <input type="text"
+                   name="Search"
+                   value="@Model.Query.Search"
+                   placeholder="Szukaj przepisu..."
+                   class="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+            <button type="submit"
+                    class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+                Szukaj
+            </button>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            <!-- Kategoria -->
+            <select name="CategoryId"
+                    onchange="this.form.submit()"
+                    class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none">
+                <option value="">Wszystkie kategorie</option>
+                @foreach (var c in Model.Categories)
+                {
+                    if (Model.Query.CategoryId == c.Id)
+                    {
+                        <option value="@c.Id" selected>@c.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                }
+            </select>
+
+            <!-- Trudność -->
+            <select name="DifficultyId"
+                    onchange="this.form.submit()"
+                    class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none">
+                <option value="">Każdy poziom</option>
+                @foreach (var d in Model.Difficulties)
+                {
+                    if (Model.Query.DifficultyId == d.Id)
+                    {
+                        <option value="@d.Id" selected>@d.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@d.Id">@d.Name</option>
+                    }
+                }
+            </select>
+
+            <!-- Sortowanie -->
+            <select name="Sort"
+                    onchange="this.form.submit()"
+                    class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none">
+                @if (Model.Query.Sort == "newest") { <option value="newest" selected>Najnowsze</option> } else { <option value="newest">Najnowsze</option> }
+                @if (Model.Query.Sort == "rating") { <option value="rating" selected>Najwyżej oceniane</option> } else { <option value="rating">Najwyżej oceniane</option> }
+                @if (Model.Query.Sort == "name")   { <option value="name" selected>Nazwa A–Z</option> }   else { <option value="name">Nazwa A–Z</option> }
+            </select>
+
+            <!-- Resetuj filtry (tylko gdy coś jest aktywne) -->
+            @if (Model.Query.Search is not null || Model.Query.CategoryId.HasValue || Model.Query.DifficultyId.HasValue || Model.Query.Sort != "newest")
+            {
+                <a asp-action="Index" class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50">
+                    ✕ Resetuj
+                </a>
+            }
+
+            <!-- Przycisk dodaj -->
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-action="Create" class="ml-auto rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+                    + Dodaj przepis
+                </a>
+            }
+        </div>
+    </form>
+
+    <!-- Licznik wyników -->
+    <p class="mb-4 text-sm text-gray-500">
+        @Model.Recipes.Count @(Model.Recipes.Count == 1 ? "przepis" : Model.Recipes.Count is >= 2 and <= 4 ? "przepisy" : "przepisów")
+    </p>
+
+    @if (!Model.Recipes.Any())
     {
         <div class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center text-gray-400">
-            Brak przepisów. Bądź pierwszą osobą, która coś doda!
+            Brak przepisów spełniających podane kryteria.
         </div>
     }
     else
     {
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach (var r in Model)
+            @foreach (var r in Model.Recipes)
             {
-                <a asp-action="Details" asp-route-id="@r.Id" class="group block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
+                <a asp-action="Details" asp-route-id="@r.Id"
+                   class="group block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
                     <div class="h-40 w-full bg-gray-100">
                         @if (!string.IsNullOrEmpty(r.ImageUrl))
                         {
@@ -38,6 +116,17 @@
                     <div class="p-4">
                         <h3 class="font-semibold text-gray-800 group-hover:text-indigo-600">@r.Name</h3>
                         <p class="mt-1 text-xs text-gray-500">@r.AuthorName • @r.DifficultyName</p>
+
+                        @if (r.Categories.Any())
+                        {
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                @foreach (var cat in r.Categories)
+                                {
+                                    <span class="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600">@cat</span>
+                                }
+                            </div>
+                        }
+
                         <div class="mt-2 text-sm text-amber-500">
                             @if (r.AverageRating.HasValue)
                             {

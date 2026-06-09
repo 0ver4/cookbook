@@ -5,7 +5,7 @@ namespace CookBook.Services;
 
 public interface IRecipeService
 {
-    Task<IReadOnlyList<RecipeListItemDto>> GetListAsync();
+    Task<RecipeListViewModel> GetListAsync(RecipeQuery? query = null);
     Task<RecipeDetailsDto?> GetDetailsAsync(int id);
 
     /// <summary>Uzupełnia model formularza danymi słownikowymi (trudność, składniki, jednostki, kategorie, tagi).</summary>

@@ -1,4 +1,5 @@
 using CookBook.Data;
+using CookBook.Dtos;
 using CookBook.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,16 +11,42 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
     {
     }
 
-    public async Task<IReadOnlyList<Recipe>> GetListAsync()
+    public async Task<IReadOnlyList<Recipe>> GetListAsync(RecipeQuery? query = null)
     {
-        return await Set.AsNoTracking()
+        var q = Set.AsNoTracking()
             .Where(r => r.IsPublished && !r.IsHidden)
             .Include(r => r.User)
             .Include(r => r.DifficultyLevel)
-            .Include(r => r.Images)
+            .Include(r => r.Images.OrderBy(i => i.Order))
             .Include(r => r.Reviews)
-            .OrderByDescending(r => r.CreatedAt)
-            .ToListAsync();
+            .Include(r => r.Categories).ThenInclude(c => c.Category)
+            .AsQueryable();
+
+        if (query is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(query.Search))
+                q = q.Where(r => r.Name.Contains(query.Search));
+
+            if (query.CategoryId.HasValue)
+                q = q.Where(r => r.Categories.Any(c => c.CategoryId == query.CategoryId.Value));
+
+            if (query.DifficultyId.HasValue)
+                q = q.Where(r => r.DifficultyLevelId == query.DifficultyId.Value);
+
+            q = query.Sort switch
+            {
+                "rating" => q.OrderByDescending(r => r.Reviews.Any()
+                    ? r.Reviews.Average(rv => (double)rv.Rating) : 0),
+                "name"   => q.OrderBy(r => r.Name),
+                _        => q.OrderByDescending(r => r.CreatedAt) // "newest"
+            };
+        }
+        else
+        {
+            q = q.OrderByDescending(r => r.CreatedAt);
+        }
+
+        return await q.ToListAsync();
     }
 
     public async Task<Recipe?> GetDetailsAsync(int id)
