@@ -13,6 +13,8 @@ public interface IRecipeService
 
     /// <summary>Wczytuje istniejący przepis do modelu formularza (edycja).</summary>
     Task<RecipeFormViewModel?> GetForEditAsync(int id);
+    
+    Task<(bool Success, string? Error)> AddReviewAsync(int recipeId, int userId, int rating);
 
     Task<(bool Success, string? Error, int RecipeId)> CreateAsync(RecipeFormViewModel vm, int userId);
     Task<(bool Success, string? Error)> UpdateAsync(RecipeFormViewModel vm, int userId, bool isModerator);

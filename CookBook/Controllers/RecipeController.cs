@@ -158,6 +158,20 @@ public class RecipeController : Controller
     [HttpPost]
     [Authorize]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddReview(int recipeId, int rating)
+    {
+        var result = await _service.AddReviewAsync(recipeId, CurrentUserId, rating);
+        if (!result.Success)
+        {
+            TempData["Error"] = result.Error;
+        }
+
+        return RedirectToAction(nameof(Details), new { id = recipeId });
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddComment(int recipeId, string content, int? replyToId)
     {
         var result = await _service.AddCommentAsync(recipeId, CurrentUserId, content, replyToId);
@@ -256,7 +270,6 @@ public class RecipeController : Controller
         var pdfBytes = document.GeneratePdf();
         string safeFileName = recipe.Name.Replace(" ", "_") + "_przepis.pdf";
         
-        // Zwraca plik jako załącznik, co wymusi natychmiastowe pobranie w przeglądarce
         return File(pdfBytes, "application/pdf", safeFileName);
     }
 
