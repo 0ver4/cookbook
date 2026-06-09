@@ -19,13 +19,16 @@
                 @Model.AuthorName • @Model.DifficultyName • @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
             </p>
         </div>
-        @if (canEdit)
-        {
-            <div class="flex gap-2">
+        <div class="flex gap-2">
+            @* Przycisk pobierania PDF dostępny dla każdego *@
+            <a asp-action="DownloadPdf" asp-route-id="@Model.Id" class="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700">📄 Pobierz PDF</a>
+            
+            @if (canEdit)
+            {
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Edytuj</a>
                 <a asp-action="Delete" asp-route-id="@Model.Id" class="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">Usuń</a>
-            </div>
-        }
+            }
+        </div>
     </div>
 
     @* Zgłoszenie przepisu — dla każdego zalogowanego, kto nie jest autorem *@
@@ -151,11 +154,9 @@
         </div>
     </div>
 
-    <!-- Sekcja komentarzy -->
     <div class="mt-12 border-t border-gray-200 pt-8">
         <h2 class="mb-6 text-xl font-bold text-gray-800">Komentarze (@Model.Comments.Count)</h2>
 
-        <!-- Formularz nowego komentarza -->
         @if (Context.User.Identity?.IsAuthenticated == true)
         {
             <form asp-controller="Recipe" asp-action="AddComment" method="post" class="mb-8">
@@ -175,7 +176,6 @@
             </div>
         }
 
-        <!-- Lista komentarzy -->
         @{
             var commentVd = new ViewDataDictionary(ViewData);
             commentVd["RecipeId"] = Model.Id;
