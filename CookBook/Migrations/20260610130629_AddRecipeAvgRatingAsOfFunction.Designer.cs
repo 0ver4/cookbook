@@ -4,6 +4,7 @@ using CookBook.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CookBook.Migrations
 {
     [DbContext(typeof(CookBookContext))]
-    partial class CookBookContextModelSnapshot : ModelSnapshot
+    [Migration("20260610130629_AddRecipeAvgRatingAsOfFunction")]
+    partial class AddRecipeAvgRatingAsOfFunction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -512,8 +515,7 @@ namespace CookBook.Migrations
 
                     b.HasIndex("RecipeId");
 
-                    b.HasIndex("UserId", "Date")
-                        .HasDatabaseName("IX_MealPlanItems_UserId_Date");
+                    b.HasIndex("UserId");
 
                     b.ToTable("MealPlanItems");
                 });
@@ -552,8 +554,7 @@ namespace CookBook.Migrations
 
                     b.HasIndex("TriggeredByUserId");
 
-                    b.HasIndex("UserId", "IsRead")
-                        .HasDatabaseName("IX_Notifications_UserId_IsRead");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
                 });
@@ -725,10 +726,6 @@ namespace CookBook.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_Recipes_Published_CreatedAt")
-                        .HasFilter("[IsPublished] = 1 AND [IsHidden] = 0");
 
                     b.HasIndex("DifficultyLevelId");
 

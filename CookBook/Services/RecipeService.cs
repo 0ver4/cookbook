@@ -106,6 +106,10 @@ public class RecipeService : IRecipeService
             .OrderByDescending(c => c.CreatedAt)
             .ToList();
 
+        // Średnia ocena sprzed 30 dni (time-travel po temporal Reviews) — do pokazania trendu.
+        var asOf30 = DateTime.UtcNow.AddDays(-30);
+        var pastRating = (await _db.GetRecipeAvgRatingAsOf(id, asOf30).FirstOrDefaultAsync())?.AverageRating;
+
         return new RecipeDetailsDto(
             r.Id,
             r.Name,
@@ -119,6 +123,7 @@ public class RecipeService : IRecipeService
             r.CreatedAt,
             r.Reviews.Count > 0 ? r.Reviews.Average(x => x.Rating) : null,
             r.Reviews.Count,
+            pastRating,
             r.Images.OrderBy(i => i.Order).Select(i => ImageUrl(i.ImageId)).ToList(),
             ingredients,
             steps,
