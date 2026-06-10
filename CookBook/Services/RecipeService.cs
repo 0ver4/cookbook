@@ -19,7 +19,6 @@ public class RecipeService : IRecipeService
     private readonly IRepository<Tag> _tags;
     private readonly IRepository<Comment> _comments;
     private readonly IRepository<CommentReaction> _commentReactions;
-    private readonly INotificationService _notifications;
     private readonly INutritionService _nutrition;
     private readonly CookBookContext _db;
 
@@ -34,7 +33,6 @@ public class RecipeService : IRecipeService
         IRepository<Tag> tags,
         IRepository<Comment> comments,
         IRepository<CommentReaction> commentReactions,
-        INotificationService notifications,
         INutritionService nutrition,
         CookBookContext db)
     {
@@ -48,7 +46,6 @@ public class RecipeService : IRecipeService
         _tags = tags;
         _comments = comments;
         _commentReactions = commentReactions;
-        _notifications = notifications;
         _nutrition = nutrition;
         _db = db;
     }
@@ -343,11 +340,14 @@ public class RecipeService : IRecipeService
 
         // RecipeImage znika kaskadowo z przepisem; same bloby (Image) usuwamy osobno.
         var imageIds = recipe.Images.Select(i => i.ImageId).ToList();
-        _recipes.Remove(recipe);
+
+        // Surowy DELETE odpala trigger trg_Recipes_DeleteCascadeComments (usuwa komentarze
+        // przepisu, których FK jest NO ACTION); reszta dzieci kaskaduje na poziomie bazy.
+        await _db.Database.ExecuteSqlRawAsync("DELETE FROM Recipes WHERE Id = @p0", id);
+
         foreach (var imageId in imageIds)
             _images.Remove(new Image { Id = imageId });
-
-        await _recipes.SaveChangesAsync();
+        await _images.SaveChangesAsync();
         return (true, null);
     }
 
@@ -372,20 +372,8 @@ public class RecipeService : IRecipeService
         await _comments.AddAsync(comment);
         await _comments.SaveChangesAsync();
 
-        // Powiadomienie: odpowiedź na komentarz → autor komentarza-rodzica
-        if (replyToId.HasValue)
-        {
-            var parent = await _comments.Query().FirstOrDefaultAsync(c => c.Id == replyToId.Value);
-            if (parent != null && parent.UserId != userId)
-                await _notifications.CreateAsync(parent.UserId, 2, userId, comment.Id);
-        }
-        else
-        {
-            // Nowy komentarz pod przepisem → właściciel przepisu
-            var recipe = await _recipes.Query().FirstOrDefaultAsync(r => r.Id == recipeId);
-            if (recipe != null && recipe.UserId != userId)
-                await _notifications.CreateAsync(recipe.UserId, 1, userId, comment.Id);
-        }
+        // Powiadomienia tworzy trigger bazodanowy trg_Comments_AfterInsert_Notify
+        // (odpowiedź → autor komentarza-rodzica, komentarz główny → autor przepisu).
 
         return (true, null);
     }
@@ -398,8 +386,8 @@ public class RecipeService : IRecipeService
         if (comment.UserId != userId && !isModerator)
             return (false, "Brak uprawnień.");
 
-        // Procedura usuwa najpierw odpowiedzi, potem komentarz-rodzica
-        await _db.Database.ExecuteSqlRawAsync("EXEC usp_DeleteComment @p0", commentId);
+        // Trigger trg_Comments_DeleteCascade przechwytuje DELETE i usuwa całe poddrzewo odpowiedzi
+        await _db.Database.ExecuteSqlRawAsync("DELETE FROM Comments WHERE Id = @p0", commentId);
         return (true, null);
     }
 

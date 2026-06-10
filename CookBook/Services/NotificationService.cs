@@ -6,18 +6,6 @@ namespace CookBook.Services;
 
 public class NotificationService(IRepository<Notification> repo) : INotificationService
 {
-    public async Task CreateAsync(int userId, int typeId, int? triggeredByUserId, int commentId)
-    {
-        await repo.AddAsync(new Notification
-        {
-            UserId = userId,
-            NotificationTypeId = typeId,
-            TriggeredByUserId = triggeredByUserId,
-            CommentId = commentId
-        });
-        await repo.SaveChangesAsync();
-    }
-
     public async Task<IReadOnlyList<NotificationDto>> GetForUserAsync(int userId)
     {
         // Najpierw pobieramy encje z bazy (AsEnumerable), potem mapujemy w pamięci
