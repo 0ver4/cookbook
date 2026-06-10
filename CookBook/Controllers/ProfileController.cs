@@ -55,10 +55,12 @@ public class ProfileController : Controller
         var roles = await _userManager.GetRolesAsync(user);
         ViewBag.UserRole = roles.FirstOrDefault() ?? "Brak roli";
 
-        //  pobieranie liczników z bazy danych
-        ViewBag.RecipesCount = await _context.Recipes.CountAsync(r => r.UserId == user.Id);
-        ViewBag.CommentsCount = await _context.Comments.CountAsync(c => c.UserId == user.Id);
-        ViewBag.FavoritesCount = 0;
+        // Liczniki z widoku vw_UserStats (agregacja po stronie bazy, jeden wiersz na użytkownika)
+        var stats = await _context.UserStats.FirstAsync(s => s.UserId == user.Id);
+        ViewBag.RecipesCount = stats.RecipeCount;
+        ViewBag.CommentsCount = stats.CommentCount;
+        ViewBag.FavoritesCount = stats.CollectionCount;
+        ViewBag.UserStats = stats;
 
         var lastActivities = await _context.Recipes
             .Where(r => r.UserId == user.Id)
