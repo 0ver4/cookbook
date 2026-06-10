@@ -49,12 +49,16 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
     // Widok (read-only): średnia ocena i liczba recenzji per przepis.
     public DbSet<RecipeRating> RecipeRatings { get; set; }
 
+    // Widok (read-only): komplet statystyk per użytkownik (jeden wiersz na użytkownika).
+    public DbSet<UserStats> UserStats { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Encja bezkluczowa mapowana na widok vw_RecipeRatings (DDL w migracji).
+        // Encje bezkluczowe mapowane na widoki (DDL w migracjach).
         modelBuilder.Entity<RecipeRating>().HasNoKey().ToView("vw_RecipeRatings");
+        modelBuilder.Entity<UserStats>().HasNoKey().ToView("vw_UserStats");
 
         // --- Dictionaries: unique names ---
         modelBuilder.Entity<DifficultyLevel>().HasIndex(d => d.Name).IsUnique();
