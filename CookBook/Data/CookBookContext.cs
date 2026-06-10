@@ -56,6 +56,10 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
     public IQueryable<RecipeRatingAsOf> GetRecipeAvgRatingAsOf(int recipeId, DateTime asOf)
         => FromExpression(() => GetRecipeAvgRatingAsOf(recipeId, asOf));
 
+    // Funkcja tabelaryczna: zsumowane wartości odżywcze przepisu (używa fn_IngredientAmountInGrams).
+    public IQueryable<RecipeNutritionRow> GetRecipeNutrition(int recipeId)
+        => FromExpression(() => GetRecipeNutrition(recipeId));
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -68,6 +72,10 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
         modelBuilder.Entity<RecipeRatingAsOf>().HasNoKey().ToView(null);
         modelBuilder.HasDbFunction(typeof(CookBookContext).GetMethod(nameof(GetRecipeAvgRatingAsOf), new[] { typeof(int), typeof(DateTime) })!)
             .HasName("fn_RecipeAvgRatingAsOf");
+
+        modelBuilder.Entity<RecipeNutritionRow>().HasNoKey().ToView(null);
+        modelBuilder.HasDbFunction(typeof(CookBookContext).GetMethod(nameof(GetRecipeNutrition), new[] { typeof(int) })!)
+            .HasName("fn_RecipeNutrition");
 
         // --- Indeksy pod realne zapytania (poza auto-indeksami FK/unique) ---
         // Domyślna lista przepisów: filtr opublikowanych + sort po dacie. Indeks filtrowany,

@@ -110,6 +110,13 @@ public class RecipeService : IRecipeService
         var asOf30 = DateTime.UtcNow.AddDays(-30);
         var pastRating = (await _db.GetRecipeAvgRatingAsOf(id, asOf30).FirstOrDefaultAsync())?.AverageRating;
 
+        // Wartości odżywcze liczy funkcja SQL fn_RecipeNutrition (przez fn_IngredientAmountInGrams).
+        // Calories == null oznacza, że przepisu nie da się policzyć (suma ukryta).
+        var nut = await _db.GetRecipeNutrition(id).FirstOrDefaultAsync();
+        var nutrition = nut?.Calories is null ? null : new RecipeNutritionSummary(
+            Math.Round(nut.Calories.Value), Math.Round(nut.Protein!.Value, 1), Math.Round(nut.Fat!.Value, 1),
+            Math.Round(nut.Carbs!.Value, 1), Math.Round(nut.Fiber!.Value, 1), Math.Round(nut.Sugar!.Value, 1), r.Servings);
+
         return new RecipeDetailsDto(
             r.Id,
             r.Name,
@@ -130,68 +137,8 @@ public class RecipeService : IRecipeService
             r.Categories.Select(c => c.Category.Name).ToList(),
             r.Tags.Select(t => t.Tag.Name).ToList(),
             commentsDto,
-            ComputeNutrition(r)
+            nutrition
         );
-    }
-
-    // Stałe id z seedu NutritionType (Data/CookBookContext.cs).
-    private const int NutCalories = 1, NutProtein = 2, NutFat = 3, NutCarbs = 4, NutFiber = 5, NutSugar = 6;
-
-    /// <summary>
-    /// Sumuje wartości odżywcze całego przepisu. Zwraca null (suma ukryta), gdy choć jeden
-    /// składnik nie da się przeliczyć na gramy albo nie ma kompletu wartości odżywczych.
-    /// </summary>
-    private static RecipeNutritionSummary? ComputeNutrition(Recipe r)
-    {
-        if (r.Ingredients.Count == 0)
-            return null;
-
-        double cal = 0, pro = 0, fat = 0, carb = 0, fib = 0, sug = 0;
-
-        foreach (var ri in r.Ingredients)
-        {
-            var grams = ToGrams(ri);
-            if (grams is null)
-                return null;
-
-            var nut = ri.Ingredient.IngredientNutritions;
-            double? Per(int typeId) => nut.FirstOrDefault(n => n.NutritionTypeId == typeId)?.AmountPer100g;
-
-            var c = Per(NutCalories); var p = Per(NutProtein); var f = Per(NutFat);
-            var cb = Per(NutCarbs); var fi = Per(NutFiber); var su = Per(NutSugar);
-            if (c is null || p is null || f is null || cb is null || fi is null || su is null)
-                return null;
-
-            var factor = grams.Value / 100.0;
-            cal += c.Value * factor; pro += p.Value * factor; fat += f.Value * factor;
-            carb += cb.Value * factor; fib += fi.Value * factor; sug += su.Value * factor;
-        }
-
-        return new RecipeNutritionSummary(
-            Math.Round(cal), Math.Round(pro, 1), Math.Round(fat, 1),
-            Math.Round(carb, 1), Math.Round(fib, 1), Math.Round(sug, 1), r.Servings);
-    }
-
-    /// <summary>Przelicza ilość składnika na gramy. null = brak przelicznika (nie da się policzyć).</summary>
-    private static double? ToGrams(RecipeIngredient ri)
-    {
-        var unitName = (ri.Unit ?? ri.Ingredient.Unit).Name.Trim().ToLowerInvariant();
-        var amount = ri.Amount;
-        var density = ri.Ingredient.DensityGramsPerMl;
-        var perPiece = ri.Ingredient.GramsPerPiece;
-
-        double? Volume(double mlPerUnit) => density is > 0 ? amount * mlPerUnit * density.Value : null;
-
-        return unitName switch
-        {
-            "gram" => amount,
-            "mililitr" => Volume(1),
-            "szklanka" => Volume(250),
-            "łyżka" => Volume(15),
-            "łyżeczka" => Volume(5),
-            "sztuka" => perPiece is > 0 ? amount * perPiece.Value : null,
-            _ => null
-        };
     }
 
     private CommentDto MapCommentWithReplies(Comment comment, ICollection<Comment> allComments)
