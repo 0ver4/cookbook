@@ -58,14 +58,20 @@ public class RecipeService : IRecipeService
         query ??= new RecipeQuery();
         var recipes = await _recipes.GetListAsync(query);
 
+        // Oceny pobieramy z widoku vw_RecipeRatings (agregacja po stronie bazy).
+        var recipeIds = recipes.Select(r => r.Id).ToList();
+        var ratings = await _db.RecipeRatings
+            .Where(rr => recipeIds.Contains(rr.RecipeId))
+            .ToDictionaryAsync(rr => rr.RecipeId);
+
         var items = recipes.Select(r => new RecipeListItemDto(
             r.Id,
             r.Name,
             r.Images.OrderBy(i => i.Order).Select(i => (int?)i.ImageId).FirstOrDefault() is int firstId ? ImageUrl(firstId) : null,
             r.DifficultyLevel.Name,
             AuthorName(r.User),
-            r.Reviews.Count > 0 ? r.Reviews.Average(x => x.Rating) : null,
-            r.Reviews.Count,
+            ratings.TryGetValue(r.Id, out var rt) ? rt.AverageRating : null,
+            ratings.TryGetValue(r.Id, out var rc) ? rc.ReviewCount : 0,
             r.Categories.Select(c => c.Category.Name).ToList()
         )).ToList();
 
