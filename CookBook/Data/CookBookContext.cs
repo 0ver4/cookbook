@@ -118,15 +118,22 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
         modelBuilder.Entity<Recipe>()
             .HasOne(r => r.DifficultyLevel).WithMany()
             .HasForeignKey(r => r.DifficultyLevelId).OnDelete(DeleteBehavior.Restrict);
+        // Trigger INSTEAD OF DELETE (kasuje komentarze przepisu, potem przepis) →
+        // EF musi używać SQL bez klauzuli OUTPUT przy zapisach do Recipes.
+        modelBuilder.Entity<Recipe>()
+            .ToTable(t => t.HasTrigger("trg_Recipes_DeleteCascadeComments"));
 
         modelBuilder.Entity<Image>()
             .HasOne(i => i.UploadedBy).WithMany()
             .HasForeignKey(i => i.UploadedById).OnDelete(DeleteBehavior.Restrict);
 
         // --- Comments ---
+        // NO ACTION (nie Cascade): SQL Server nie pozwala na trigger INSTEAD OF DELETE
+        // na tabeli z kaskadowym FK. Usuwanie komentarzy przepisu przejmuje
+        // trigger INSTEAD OF DELETE na Recipes (trg_Recipes_DeleteCascadeComments).
         modelBuilder.Entity<Comment>()
             .HasOne(c => c.Recipe).WithMany(r => r.Comments)
-            .HasForeignKey(c => c.RecipeId).OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(c => c.RecipeId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Comment>()
             .HasOne(c => c.User).WithMany()
             .HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Restrict);
@@ -136,6 +143,14 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
         modelBuilder.Entity<Comment>()
             .HasOne(c => c.ReplyTo).WithMany(c => c.Replies)
             .HasForeignKey(c => c.ReplyToId).OnDelete(DeleteBehavior.Restrict);
+        // Tabela ma triggery (kaskadowe usuwanie poddrzewa + tworzenie powiadomień),
+        // więc EF musi przełączyć się na SQL bez klauzuli OUTPUT.
+        modelBuilder.Entity<Comment>()
+            .ToTable(t =>
+            {
+                t.HasTrigger("trg_Comments_DeleteCascade");
+                t.HasTrigger("trg_Comments_AfterInsert_Notify");
+            });
 
         // --- Reviews ---
         modelBuilder.Entity<Review>()

@@ -12,7 +12,6 @@ public record NotificationDto(
 
 public interface INotificationService
 {
-    Task CreateAsync(int userId, int typeId, int? triggeredByUserId, int commentId);
     Task<IReadOnlyList<NotificationDto>> GetForUserAsync(int userId);
     Task<int> GetUnreadCountAsync(int userId);
     Task MarkAsReadAsync(int notificationId, int userId);
