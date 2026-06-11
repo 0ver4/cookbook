@@ -1,3 +1,4 @@
+using CookBook.Data;
 using CookBook.Dtos;
 using CookBook.Models;
 using CookBook.Repositories;
@@ -11,17 +12,20 @@ public class ShoppingListService : IShoppingListService
     private readonly IRecipeRepository _recipes;
     private readonly IRepository<Ingredient> _ingredients;
     private readonly IRepository<Unit> _units;
+    private readonly CookBookContext _db;
 
     public ShoppingListService(
         IShoppingListRepository lists,
         IRecipeRepository recipes,
         IRepository<Ingredient> ingredients,
-        IRepository<Unit> units)
+        IRepository<Unit> units,
+        CookBookContext db)
     {
         _lists = lists;
         _recipes = recipes;
         _ingredients = ingredients;
         _units = units;
+        _db = db;
     }
 
     public async Task<IReadOnlyList<ShoppingListSummaryDto>> GetForUserAsync(int userId)
@@ -130,22 +134,15 @@ public class ShoppingListService : IShoppingListService
 
     public async Task<(bool Success, string? Error)> GenerateFromRecipeAsync(int listId, int userId, int recipeId)
     {
-        var list = await _lists.GetWithItemsAsync(listId);
+        var list = await _lists.GetByIdAsync(listId);
         if (list is null || list.UserId != userId)
             return (false, "Nie znaleziono listy.");
 
-        var recipe = await _recipes.GetDetailsAsync(recipeId);
-        if (recipe is null)
+        if (!await _recipes.ExistsAsync(recipeId))
             return (false, "Nie znaleziono przepisu.");
 
-        foreach (var ri in recipe.Ingredients)
-        {
-            var ingredient = await _ingredients.GetByIdAsync(ri.IngredientId);
-            if (ingredient is not null)
-                MergeItem(list, ingredient, ri.UnitId ?? ingredient.UnitId, ri.Amount);
-        }
-
-        await _lists.SaveChangesAsync();
+        // Agregację i upsert (po składnik+jednostka) robi procedura usp_GenerateShoppingList.
+        await _db.Database.ExecuteSqlRawAsync("EXEC usp_GenerateShoppingList @p0, @p1", listId, recipeId);
         return (true, null);
     }
 
