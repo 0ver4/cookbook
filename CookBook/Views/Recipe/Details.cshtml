@@ -95,6 +95,15 @@
                 </span>
                 <span class="font-semibold text-amber-600">@Model.AverageRating.Value.ToString("0.0")</span>
                 <span class="text-gray-400 text-xs">(@Model.ReviewCount @(Model.ReviewCount == 1 ? "ocena" : Model.ReviewCount is >= 2 and <= 4 ? "oceny" : "ocen"))</span>
+                @if (Model.AverageRating30DaysAgo.HasValue)
+                {
+                    var diff = Model.AverageRating.Value - Model.AverageRating30DaysAgo.Value;
+                    var arrow = diff > 0.05 ? "▲" : diff < -0.05 ? "▼" : "▬";
+                    var trendClass = diff > 0.05 ? "text-green-600" : diff < -0.05 ? "text-red-600" : "text-gray-400";
+                    <span class="@trendClass text-xs" title="30 dni temu: @Model.AverageRating30DaysAgo.Value.ToString("0.0")">
+                        @arrow @(diff >= 0 ? "+" : "")@diff.ToString("0.0") (30 dni)
+                    </span>
+                }
             </span>
         }
         else

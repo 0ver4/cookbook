@@ -52,6 +52,10 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
     // Widok (read-only): komplet statystyk per użytkownik (jeden wiersz na użytkownika).
     public DbSet<UserStats> UserStats { get; set; }
 
+    // Funkcja tabelaryczna: średnia ocena przepisu w chwili @asOf (time-travel po temporal Reviews).
+    public IQueryable<RecipeRatingAsOf> GetRecipeAvgRatingAsOf(int recipeId, DateTime asOf)
+        => FromExpression(() => GetRecipeAvgRatingAsOf(recipeId, asOf));
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -59,6 +63,27 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
         // Encje bezkluczowe mapowane na widoki (DDL w migracjach).
         modelBuilder.Entity<RecipeRating>().HasNoKey().ToView("vw_RecipeRatings");
         modelBuilder.Entity<UserStats>().HasNoKey().ToView("vw_UserStats");
+
+        // Typ wyniku TVF fn_RecipeAvgRatingAsOf — bezkluczowy, bez własnej tabeli.
+        modelBuilder.Entity<RecipeRatingAsOf>().HasNoKey().ToView(null);
+        modelBuilder.HasDbFunction(typeof(CookBookContext).GetMethod(nameof(GetRecipeAvgRatingAsOf), new[] { typeof(int), typeof(DateTime) })!)
+            .HasName("fn_RecipeAvgRatingAsOf");
+
+        // --- Indeksy pod realne zapytania (poza auto-indeksami FK/unique) ---
+        // Domyślna lista przepisów: filtr opublikowanych + sort po dacie. Indeks filtrowany,
+        // bo zawsze pytamy o IsPublished=1 AND IsHidden=0 — mniejszy i celniejszy.
+        modelBuilder.Entity<Recipe>()
+            .HasIndex(r => r.CreatedAt)
+            .HasFilter("[IsPublished] = 1 AND [IsHidden] = 0")
+            .HasDatabaseName("IX_Recipes_Published_CreatedAt");
+        // Licznik/lista nieprzeczytanych powiadomień (badge na każdej stronie).
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => new { n.UserId, n.IsRead })
+            .HasDatabaseName("IX_Notifications_UserId_IsRead");
+        // Plan posiłków w zakresie dat dla użytkownika.
+        modelBuilder.Entity<MealPlanItem>()
+            .HasIndex(m => new { m.UserId, m.Date })
+            .HasDatabaseName("IX_MealPlanItems_UserId_Date");
 
         // --- Dictionaries: unique names ---
         modelBuilder.Entity<DifficultyLevel>().HasIndex(d => d.Name).IsUnique();
@@ -169,8 +194,13 @@ public class CookBookContext : IdentityDbContext<ApplicationUser, IdentityRole<i
         modelBuilder.Entity<Review>()
             .HasOne(r => r.User).WithMany()
             .HasForeignKey(r => r.UserId).OnDelete(DeleteBehavior.Restrict);
+        // Tabela wersjonowana czasowo — historia zmian recenzji (np. zmiana oceny/treści).
         modelBuilder.Entity<Review>()
-            .ToTable(t => t.HasCheckConstraint("chk_review_rating_range", "[Rating] BETWEEN 1 AND 5"));
+            .ToTable("Reviews", t =>
+            {
+                t.HasCheckConstraint("chk_review_rating_range", "[Rating] BETWEEN 1 AND 5");
+                t.IsTemporal();
+            });
 
         // --- Reactions ---
         modelBuilder.Entity<Reaction>()

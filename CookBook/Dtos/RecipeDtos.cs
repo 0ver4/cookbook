@@ -66,6 +66,7 @@ public record RecipeDetailsDto(
     DateTime CreatedAt,
     double? AverageRating,
     int ReviewCount,
+    double? AverageRating30DaysAgo,
     IReadOnlyList<string> ImageUrls,
     IReadOnlyList<RecipeIngredientLine> Ingredients,
     IReadOnlyList<RecipeStepLine> Steps,
