@@ -11,8 +11,10 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
     {
     }
 
-    public async Task<IReadOnlyList<Recipe>> GetListAsync(RecipeQuery? query = null)
+    public async Task<PagedResult<Recipe>> GetListAsync(RecipeQuery? query = null)
     {
+        query ??= new RecipeQuery();
+
         var q = Set.AsNoTracking()
             .Where(r => r.IsPublished && !r.IsHidden)
             .Include(r => r.User)
@@ -22,31 +24,36 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
             .Include(r => r.Categories).ThenInclude(c => c.Category)
             .AsQueryable();
 
-        if (query is not null)
+        if (!string.IsNullOrWhiteSpace(query.Search))
+            q = q.Where(r => r.Name.Contains(query.Search));
+
+        if (query.CategoryId.HasValue)
+            q = q.Where(r => r.Categories.Any(c => c.CategoryId == query.CategoryId.Value));
+
+        if (query.DifficultyId.HasValue)
+            q = q.Where(r => r.DifficultyLevelId == query.DifficultyId.Value);
+
+        q = query.Sort switch
         {
-            if (!string.IsNullOrWhiteSpace(query.Search))
-                q = q.Where(r => r.Name.Contains(query.Search));
+            "rating" => q.OrderByDescending(r => r.Reviews.Any()
+                ? r.Reviews.Average(rv => (double)rv.Rating) : 0),
+            "name"   => q.OrderBy(r => r.Name),
+            _        => q.OrderByDescending(r => r.CreatedAt) // "newest"
+        };
 
-            if (query.CategoryId.HasValue)
-                q = q.Where(r => r.Categories.Any(c => c.CategoryId == query.CategoryId.Value));
+        // Liczba wszystkich pasujących rekordów (EF pomija Include() przy COUNT) - potrzebna do wyliczenia liczby stron.
+        var totalCount = await q.CountAsync();
 
-            if (query.DifficultyId.HasValue)
-                q = q.Where(r => r.DifficultyLevelId == query.DifficultyId.Value);
+        var page = query.Page < 1 ? 1 : query.Page;
+        var pageSize = query.PageSize < 1 ? 9 : query.PageSize;
 
-            q = query.Sort switch
-            {
-                "rating" => q.OrderByDescending(r => r.Reviews.Any()
-                    ? r.Reviews.Average(rv => (double)rv.Rating) : 0),
-                "name"   => q.OrderBy(r => r.Name),
-                _        => q.OrderByDescending(r => r.CreatedAt) // "newest"
-            };
-        }
-        else
-        {
-            q = q.OrderByDescending(r => r.CreatedAt);
-        }
+        // Stronicowanie realizowane po stronie bazy (SQL OFFSET ... FETCH NEXT).
+        var items = await q
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
-        return await q.ToListAsync();
+        return new PagedResult<Recipe>(items, page, pageSize, totalCount);
     }
 
     public async Task<Recipe?> GetDetailsAsync(int id)

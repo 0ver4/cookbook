@@ -56,7 +56,8 @@ public class RecipeService : IRecipeService
     public async Task<RecipeListViewModel> GetListAsync(RecipeQuery? query = null)
     {
         query ??= new RecipeQuery();
-        var recipes = await _recipes.GetListAsync(query);
+        var paged = await _recipes.GetListAsync(query);
+        var recipes = paged.Items;
 
         // Oceny pobieramy z widoku vw_RecipeRatings (agregacja po stronie bazy).
         var recipeIds = recipes.Select(r => r.Id).ToList();
@@ -80,7 +81,8 @@ public class RecipeService : IRecipeService
         var difficulties = (await _difficultyLevels.GetAllAsync())
             .OrderBy(d => d.Id).Select(d => new LookupItem(d.Id, d.Name)).ToList();
 
-        return new RecipeListViewModel(items, categories, difficulties, query);
+        return new RecipeListViewModel(items, categories, difficulties, query,
+            paged.Page, paged.PageSize, paged.TotalCount);
     }
 
     public async Task<RecipeDetailsDto?> GetDetailsAsync(int id)

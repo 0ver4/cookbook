@@ -87,7 +87,11 @@
 
     <!-- Licznik wyników -->
     <p class="mb-4 text-sm text-gray-500">
-        @Model.Recipes.Count @(Model.Recipes.Count == 1 ? "przepis" : Model.Recipes.Count is >= 2 and <= 4 ? "przepisy" : "przepisów")
+        @Model.TotalCount @(Model.TotalCount == 1 ? "przepis" : Model.TotalCount % 10 is >= 2 and <= 4 && Model.TotalCount % 100 is < 12 or > 14 ? "przepisy" : "przepisów")
+        @if (Model.TotalPages > 1)
+        {
+            <span>• strona @Model.Page z @Model.TotalPages</span>
+        }
     </p>
 
     @if (!Model.Recipes.Any())
@@ -152,5 +156,73 @@
                 </a>
             }
         </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            // Buduje komplet parametrów query string dla danej strony, zachowując aktywne filtry/sortowanie.
+            Dictionary<string, string> RouteFor(int page)
+            {
+                var data = new Dictionary<string, string> { ["Page"] = page.ToString(), ["Sort"] = Model.Query.Sort };
+                if (!string.IsNullOrWhiteSpace(Model.Query.Search)) data["Search"] = Model.Query.Search;
+                if (Model.Query.CategoryId.HasValue) data["CategoryId"] = Model.Query.CategoryId.Value.ToString();
+                if (Model.Query.DifficultyId.HasValue) data["DifficultyId"] = Model.Query.DifficultyId.Value.ToString();
+                return data;
+            }
+
+            int windowStart = Math.Max(1, Model.Page - 2);
+            int windowEnd = Math.Min(Model.TotalPages, Model.Page + 2);
+
+            <nav class="mt-8 flex items-center justify-center gap-1" aria-label="Stronicowanie">
+                @if (Model.HasPrevious)
+                {
+                    <a asp-action="Index" asp-all-route-data="RouteFor(Model.Page - 1)"
+                       class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">‹ Poprzednia</a>
+                }
+                else
+                {
+                    <span class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-300">‹ Poprzednia</span>
+                }
+
+                @if (windowStart > 1)
+                {
+                    <a asp-action="Index" asp-all-route-data="RouteFor(1)" class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">1</a>
+                    if (windowStart > 2)
+                    {
+                        <span class="px-2 text-sm text-gray-400">…</span>
+                    }
+                }
+
+                @for (int p = windowStart; p <= windowEnd; p++)
+                {
+                    if (p == Model.Page)
+                    {
+                        <span class="rounded-lg border border-indigo-600 bg-indigo-600 px-3 py-2 text-sm font-medium text-white">@p</span>
+                    }
+                    else
+                    {
+                        <a asp-action="Index" asp-all-route-data="RouteFor(p)" class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">@p</a>
+                    }
+                }
+
+                @if (windowEnd < Model.TotalPages)
+                {
+                    if (windowEnd < Model.TotalPages - 1)
+                    {
+                        <span class="px-2 text-sm text-gray-400">…</span>
+                    }
+                    <a asp-action="Index" asp-all-route-data="RouteFor(Model.TotalPages)" class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">@Model.TotalPages</a>
+                }
+
+                @if (Model.HasNext)
+                {
+                    <a asp-action="Index" asp-all-route-data="RouteFor(Model.Page + 1)"
+                       class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">Następna ›</a>
+                }
+                else
+                {
+                    <span class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-300">Następna ›</span>
+                }
+            </nav>
+        }
     }
 </div>

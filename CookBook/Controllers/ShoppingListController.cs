@@ -1,3 +1,4 @@
+using CookBook.Dtos;
 using CookBook.Models;
 using CookBook.Repositories;
 using CookBook.Services;
@@ -50,7 +51,8 @@ public class ShoppingListController : Controller
         if (list is null)
             return NotFound();
 
-        var recipes = await _recipeService.GetListAsync();
+        // Pełna lista przepisów do wyboru (bez paginacji - to słownik wyboru "dodaj z przepisu").
+        var recipes = await _recipeService.GetListAsync(new RecipeQuery(PageSize: int.MaxValue));
         ViewBag.Recipes = recipes.Recipes.Select(r => new LookupItem(r.Id, r.Name)).ToList();
 
         var units = await _units.GetAllAsync();

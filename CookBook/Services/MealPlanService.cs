@@ -1,3 +1,4 @@
+using CookBook.Dtos;
 using CookBook.Models;
 using CookBook.Repositories;
 using CookBook.ViewModels;
@@ -21,7 +22,8 @@ public class MealPlanService : IMealPlanService
         var weekEnd = weekStart.AddDays(7);
 
         var items = await _mealPlan.GetForUserInRangeAsync(userId, weekStart, weekEnd);
-        var recipes = await _recipeService.GetListAsync();
+        // Pełna lista przepisów do wyboru w planie (bez paginacji - to słownik wyboru).
+        var recipes = await _recipeService.GetListAsync(new RecipeQuery(PageSize: int.MaxValue));
 
         var vm = new MealPlanWeekViewModel
         {

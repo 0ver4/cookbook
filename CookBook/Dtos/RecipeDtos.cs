@@ -2,12 +2,14 @@ using CookBook.ViewModels;
 
 namespace CookBook.Dtos;
 
-/// <summary>Parametry filtrowania/sortowania listy przepisów (przekazywane przez query string).</summary>
+/// <summary>Parametry filtrowania/sortowania/stronicowania listy przepisów (przekazywane przez query string).</summary>
 public record RecipeQuery(
     string? Search = null,
     int? CategoryId = null,
     int? DifficultyId = null,
-    string Sort = "newest");
+    string Sort = "newest",
+    int Page = 1,
+    int PageSize = 9);
 
 /// <summary>Skrócony przepis na liście/kartach.</summary>
 public record RecipeListItemDto(
@@ -20,12 +22,20 @@ public record RecipeListItemDto(
     int ReviewCount,
     IReadOnlyList<string> Categories);
 
-/// <summary>Dane potrzebne do wyrenderowania listy z filtrami.</summary>
+/// <summary>Dane potrzebne do wyrenderowania listy z filtrami i paginacją.</summary>
 public record RecipeListViewModel(
     IReadOnlyList<RecipeListItemDto> Recipes,
     IReadOnlyList<LookupItem> Categories,
     IReadOnlyList<LookupItem> Difficulties,
-    RecipeQuery Query);
+    RecipeQuery Query,
+    int Page,
+    int PageSize,
+    int TotalCount)
+{
+    public int TotalPages => TotalCount == 0 ? 1 : (int)Math.Ceiling(TotalCount / (double)PageSize);
+    public bool HasPrevious => Page > 1;
+    public bool HasNext => Page < TotalPages;
+}
 
 /// <summary>Pojedyncza pozycja składnika w widoku szczegółów.</summary>
 public record RecipeIngredientLine(string IngredientName, double Amount, string UnitName);

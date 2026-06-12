@@ -5,8 +5,8 @@ namespace CookBook.Repositories;
 
 public interface IRecipeRepository : IRepository<Recipe>
 {
-    /// <summary>Przepisy z filtrowaniem, sortowaniem i danymi na listę.</summary>
-    Task<IReadOnlyList<Recipe>> GetListAsync(RecipeQuery? query = null);
+    /// <summary>Strona przepisów z filtrowaniem, sortowaniem i danymi na listę (stronicowanie po stronie bazy).</summary>
+    Task<PagedResult<Recipe>> GetListAsync(RecipeQuery? query = null);
 
     /// <summary>Pełny przepis ze wszystkimi powiązaniami do widoku szczegółów.</summary>
     Task<Recipe?> GetDetailsAsync(int id);
