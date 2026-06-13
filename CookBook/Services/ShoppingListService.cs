@@ -2,6 +2,7 @@ using CookBook.Data;
 using CookBook.Dtos;
 using CookBook.Models;
 using CookBook.Repositories;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace CookBook.Services;
@@ -142,8 +143,17 @@ public class ShoppingListService : IShoppingListService
             return (false, "Nie znaleziono przepisu.");
 
         // Agregację i upsert (po składnik+jednostka) robi procedura usp_GenerateShoppingList.
-        await _db.Database.ExecuteSqlRawAsync("EXEC usp_GenerateShoppingList @p0, @p1", listId, recipeId);
-        return (true, null);
+        // Procedura zgłasza własny błąd (THROW 5000x) przy złamaniu reguły biznesowej -
+        // łapiemy go jako SqlException i przekazujemy komunikat z bazy do warstwy widoku.
+        try
+        {
+            await _db.Database.ExecuteSqlRawAsync("EXEC usp_GenerateShoppingList @p0, @p1", listId, recipeId);
+            return (true, null);
+        }
+        catch (SqlException ex) when (ex.Number >= 50000)
+        {
+            return (false, ex.Message);
+        }
     }
 
     /// <summary>Dodaje ilość do pozycji o tym samym składniku i jednostce albo tworzy nową.</summary>
