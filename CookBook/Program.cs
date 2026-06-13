@@ -71,9 +71,24 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+// Pomijamy przy uruchomieniu przez narzędzia EF (dotnet ef migrations add / database update),
+// żeby nie łączyć się z bazą ani nie odpalać seedu w trakcie generowania migracji.
+if (!EF.IsDesignTime)
 {
+    using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
+
+    // Migracje (DDL + utworzenie loginu 'cookbook_app') wykonujemy na połączeniu
+    // administracyjnym, bo runtime'owy user ma tylko datareader/datawriter/EXECUTE.
+    var adminOptions = new DbContextOptionsBuilder<CookBookContext>()
+        .UseSqlServer(builder.Configuration.GetConnectionString("CookBookAdmin"))
+        .Options;
+    await using (var adminDb = new CookBookContext(adminOptions))
+    {
+        await adminDb.Database.MigrateAsync();
+    }
+
+    // Seed danych działa już na zwykłym kontekście (cookbook_app, ma datawriter).
     await SeedData.Initialize(services);
 }
 
