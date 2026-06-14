@@ -90,6 +90,10 @@ if (!EF.IsDesignTime)
 
     // Seed danych działa już na zwykłym kontekście (cookbook_app, ma datawriter).
     await SeedData.Initialize(services);
+
+    // Dane testowe (Bogus) tylko lokalnie i tylko gdy baza pusta.
+    if (app.Environment.IsDevelopment())
+        await FakeDataSeeder.SeedAsync(services);
 }
 
 // Configure the HTTP request pipeline.
