@@ -70,6 +70,9 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
             .Include(r => r.Reviews)
             .Include(r => r.Comments).ThenInclude(c => c.User)
             .Include(r => r.Comments).ThenInclude(c => c.Reactions).ThenInclude(cr => cr.Reaction)
+            // Optymalizacja: rozbicie na osobne zapytania per kolekcja eliminuje iloczyn kartezjański
+            // (jedno wielkie zapytanie z wieloma LEFT JOIN -> kilka małych zapytań po indeksach FK).
+            .AsSplitQuery()
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 
