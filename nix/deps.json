@@ -10,6 +10,11 @@
     "hash": "sha256-AHJKjCGLC+18sSPLPrrgTnVSsuGhLokgddLENTM2OQE="
   },
   {
+    "pname": "Bogus",
+    "version": "35.6.5",
+    "hash": "sha256-DSaftpz2NXv9k0IIK9GQd5CkYPrgvkSxruKFQSg3gbc="
+  },
+  {
     "pname": "dotnet-ef",
     "version": "8.0.10",
     "hash": "sha256-J12XiJquBNUp3OwHdv43hIFoaJ9dz2P6BEIzgZf+w0I="
